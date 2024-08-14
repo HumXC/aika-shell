@@ -1,9 +1,21 @@
 .right-bar {
     border-radius: 10px;
     background: blue;
+    .clock {
+        .time {
+            font-weight: bold;
+            font-size: 32;
+        }
+        .date {
+            font-size: 16;
+            padding-bottom: 6px;
+            color: rgba(255, 255, 255, 0.927);
+        }
+    }
     .top {
         border-radius: 10px 10px 0 0;
         background: rgb(127, 182, 222);
+        padding: 14px 8px 3px 8px;
     }
     .center {
         background: yellow;

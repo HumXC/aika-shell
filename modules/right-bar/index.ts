@@ -1,40 +1,49 @@
 import { IsShow as NotifyIsShow } from "../notifications/index";
+import time from "services/time";
 const MarginTop = 55;
 const MarginRight = 7;
 const MarginBottom = 7;
+const Clock = () =>
+    Widget.Box({
+        class_name: "clock",
+        spacing: 8,
+        children: [
+            Widget.Label({
+                class_name: "time",
+                label: time.bind("minutes").as(() => time.hours + ":" + time.minutes),
+            }),
+            Widget.Box({
+                vpack: "end",
+                child: Widget.Label({
+                    class_name: "date",
+                    label: time
+                        .bind("day")
+                        .as(
+                            () =>
+                                time.year + "-" + time.month + "-" + time.year + " " + time.weekday
+                        ),
+                }),
+            }),
+        ],
+    });
 const Top = () =>
     Widget.Box({
         class_name: "top",
         vpack: "start",
-        children: [
-            Widget.Button({
-                label: "关闭",
-                class_name: "close",
-            }),
-        ],
+        children: [Clock()],
     });
 const Center = () =>
     Widget.Box({
         class_name: "center",
         width_request: 400,
         vexpand: true,
-        children: [
-            Widget.Button({
-                label: "关闭",
-                class_name: "close",
-            }),
-        ],
+        children: [],
     });
 const Bottom = () =>
     Widget.Box({
         class_name: "bottom",
         vpack: "end",
-        children: [
-            Widget.Button({
-                label: "关闭",
-                class_name: "close",
-            }),
-        ],
+        children: [],
     });
 
 function RightBar() {
@@ -98,7 +107,7 @@ function RightBar() {
             child: outer,
         }),
     });
-
+    show();
     return Object.assign(w, {
         is_show: is_show,
     });
