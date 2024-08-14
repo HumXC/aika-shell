@@ -84,7 +84,7 @@ function PopupList() {
         destroy: () => void;
     }
     const destroys: Destroyable[] = [];
-    let destroying = false;
+    let notifying = false;
     function remove(_: unknown, id: number) {
         const w = map.get(id);
         if (!w) return;
@@ -92,10 +92,10 @@ function PopupList() {
         map.delete(id);
         destroys.push(w);
         if (map.size === 0) {
+            notifying = false;
             Utils.timeout(OuterAnimationTime * 2 + InnerAnimationTime * 2 + 300, () => {
-                destroying = true;
+                if (notifying) return;
                 while (destroys.length) destroys.pop()?.destroy();
-                destroying = false;
             });
         }
     }
@@ -107,7 +107,7 @@ function PopupList() {
                 if (id !== undefined) {
                     if (map.has(id)) remove(null, id);
                     if (notifications.dnd) return;
-                    while (destroying) {}
+                    notifying = true;
                     const w = Animated(id);
                     map.set(id, w);
                     box.children = [w, ...box.children];
