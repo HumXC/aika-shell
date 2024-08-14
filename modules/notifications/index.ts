@@ -75,6 +75,7 @@ function NotificationIcon({ app_entry, app_icon, image }: NotificationType) {
         }),
     });
 }
+
 function PopupList() {
     const map: Map<number, ReturnType<typeof Animated>> = new Map();
     const box = Widget.Box({
@@ -135,6 +136,7 @@ function PopupList() {
         .hook(notifications, remove, "dismissed")
         .hook(notifications, remove, "closed");
 }
+
 function Notification(n: NotificationType) {
     let t = n.timeout;
     const progress = Widget.ProgressBar({
@@ -237,6 +239,7 @@ function Notification(n: NotificationType) {
 
     return eb;
 }
+
 function Notifications() {
     const w = Widget.Window({
         name: `notifications`,

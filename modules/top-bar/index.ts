@@ -4,53 +4,12 @@ const systemtray = await Service.import("systemtray");
 const network = await Service.import("network");
 const mpris = await Service.import("mpris");
 const players = mpris.bind("players");
+import time from "services/time";
+import network_speed from "services/network-speed";
 import { RightBar } from "modules/right-bar/index";
-const date = Variable("", {
-    poll: [1000, 'date "+%H:%M %S %m/%d 周%a"'],
-});
-let ifstatePrevDate = { kernel: {} };
-function formatSpeed(bytesPerSecond: number) {
-    if (bytesPerSecond < 1e6) {
-        return `${(bytesPerSecond / 1024).toFixed(2)} KB/s`;
-    } else {
-        return `${(bytesPerSecond / 1e6).toFixed(2)} MB/s`;
-    }
-}
-const ifstate = Variable(
-    { downloadSpeed: "", uploadSpeed: "" },
-    {
-        poll: [
-            1000,
-            "ifstat -j",
-            (out) => {
-                let currentData = JSON.parse(out);
-                if (ifstatePrevDate === undefined) {
-                    ifstatePrevDate = currentData;
-                }
-                const previousData = ifstatePrevDate;
-                const result = {
-                    downloadSpeed: "",
-                    uploadSpeed: "",
-                };
-                let totalRxBytes = 0;
-                let totalTxBytes = 0;
 
-                for (const iface of Object.keys(currentData.kernel)) {
-                    if (iface === "lo") continue; // 忽略 lo 接口
-                    const prev = previousData.kernel[iface];
-                    const current = currentData.kernel[iface];
-                    if (!prev || !current) continue;
-                    totalRxBytes += current.rx_bytes - prev.rx_bytes;
-                    totalTxBytes += current.tx_bytes - prev.tx_bytes;
-                }
-                result.downloadSpeed = formatSpeed(totalRxBytes);
-                result.uploadSpeed = formatSpeed(totalTxBytes);
-                ifstatePrevDate = currentData;
-                return result;
-            },
-        ],
-    }
-);
+let ifstatePrevDate = { kernel: {} };
+
 const WifiIndicator = () => {
     const value = Widget.Revealer({
         class_name: "wifi-indicator-value",
@@ -98,18 +57,17 @@ const NetworkIndicator = () =>
         shown: network.bind("primary").as((p) => p || "wifi"),
     });
 
-const NetworkSpeed = () =>
-    Widget.Label({
+const NetworkSpeed = () => {
+    return Widget.Label({
         class_name: "network-speed",
         use_markup: true,
         css: "font-weight: normal;",
-        label: ifstate
-            .bind()
-            .as(
-                (data) =>
-                    ` <span font_size="small">${data.downloadSpeed}</span>  <span font_size="small">${data.uploadSpeed}</span>`
-            ),
+        setup: (self) =>
+            self.hook(network_speed, (self) => {
+                self.label = ` <span font_size="small">${network_speed.download_speed}</span>  <span font_size="small">${network_speed.upload_speed}</span>`;
+            }),
     });
+};
 
 function Workspaces() {
     const activeId = hyprland.active.workspace.bind("id");
@@ -275,9 +233,9 @@ function Clock() {
     return Widget.Label({
         class_name: "clock",
         css: "font-weight: bold; font-size: 16px;",
-        label: date.bind().as((date) => date.split(" ")[0]),
-        tooltip_text: date.bind().as((date) => {
-            return date.split(" ")[1] + "s | " + date.split(" ").slice(-2).join(" ");
+        label: time.bind("minutes").as(() => time.hours + ":" + time.minutes),
+        tooltip_text: time.bind("seconds").as(() => {
+            return time.seconds + "s | " + time.month + "/" + time.day + " " + time.weekday;
         }),
     });
 }
