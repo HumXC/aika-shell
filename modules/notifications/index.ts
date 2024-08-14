@@ -1,6 +1,8 @@
 const notifications = await Service.import("notifications");
 import Pango from "types/@girs/pango-1.0/pango-1.0";
 import { Notification as NotificationType } from "types/service/notifications";
+const MarginTop = 55;
+const MarginRight = 7;
 const InnerAnimationTime = 100;
 const OuterAnimationTime = 300;
 function Animated(id: number) {
@@ -38,7 +40,6 @@ function Animated(id: number) {
                 inner.reveal_child = false;
                 Utils.timeout(InnerAnimationTime + 100, () => {
                     this.can_destory = true;
-                    box.destroy();
                 });
             });
         },
@@ -92,21 +93,21 @@ function PopupList() {
         w.dismiss();
         map.delete(id);
         destroys.push(w);
-        // if (map.size === 0) {
-        //     notifying = false;
-        //     Utils.timeout(OuterAnimationTime * 2 + InnerAnimationTime * 2 + 300, () => {
-        //         if (notifying) return;
-        //         while (destroys.length) {
-        //             const dest = destroys.pop();
-        //             if (!dest) continue;
-        //             if (dest.can_destory) {
-        //                 dest.destroy();
-        //             } else {
-        //                 destroys.push(dest);
-        //             }
-        //         }
-        //     });
-        // }
+        if (map.size === 0) {
+            notifying = false;
+            Utils.timeout(OuterAnimationTime + InnerAnimationTime + 100, () => {
+                if (notifying) return;
+                while (destroys.length) {
+                    const dest = destroys.pop();
+                    if (!dest) continue;
+                    if (dest.can_destory) {
+                        dest.destroy();
+                    } else {
+                        destroys.push(dest);
+                    }
+                }
+            });
+        }
     }
 
     return box
@@ -209,7 +210,6 @@ function Notification(n: NotificationType) {
             };
             return;
         }
-        print(a.id);
         const w = Widget.Box({
             css: "padding-bottom: 5px;",
             child: Widget.EventBox({
@@ -236,9 +236,11 @@ function Notifications() {
         anchor: ["top", "right"],
         exclusivity: "ignore",
         layer: "overlay",
-        margins: [47, 0, 0, 0],
+        margins: [MarginTop, MarginRight, 0, 0],
         css: "background: transparent;",
         keymode: "none",
+        width_request: 1,
+        height_request: 1,
         child: PopupList(),
     });
 
