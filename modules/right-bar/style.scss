@@ -1,0 +1,15 @@
+.right-bar {
+    border-radius: 10px;
+    background: blue;
+    .top {
+        border-radius: 10px 10px 0 0;
+        background: rgb(127, 182, 222);
+    }
+    .center {
+        background: yellow;
+    }
+    .bottom {
+        border-radius: 0 0 10px 10px;
+        background: green;
+    }
+}

@@ -1,0 +1,44 @@
+.notifications {
+    padding: 8px;
+    .notification {
+        border: 2px solid rgb(72, 72, 72);
+        background: linear-gradient(
+                270deg,
+                rgba(0, 0, 0, 0.8),
+                rgba(16, 37, 41, 0.722),
+                rgba(7, 25, 39, 0.8),
+                rgba(22, 14, 42, 0.821),
+                rgba(24, 36, 24, 0.703)
+            )
+            center / cover;
+        background-size: 200% 200%;
+        border-radius: 10px;
+        animation: BackgroundChange 10s steps(90) infinite;
+    }
+    .notification:hover {
+        border: 2px solid rgb(188, 188, 188);
+    }
+    .notification-icon {
+        border-radius: 10px 0 0 10px;
+        padding: 10px;
+    }
+    .notification-title {
+        margin-top: 10px;
+        font-size: 14px;
+        border-radius: 0 10px 0 0;
+    }
+    .notification-body {
+        font-size: 12px;
+        border-radius: 0 0 10px 0;
+    }
+    .notification-progress trough {
+        min-height: 2px;
+        border-radius: 1px;
+        background-color: rgba(179, 179, 179, 0.37);
+        progress {
+            min-height: 2px;
+            border-radius: 1px;
+            background-color: rgb(51, 153, 255);
+        }
+    }
+}
