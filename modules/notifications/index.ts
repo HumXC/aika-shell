@@ -1,7 +1,6 @@
 const notifications = await Service.import("notifications");
 import Pango from "types/@girs/pango-1.0/pango-1.0";
 import { Notification as NotificationType } from "types/service/notifications";
-
 const InnerAnimationTime = 100;
 const OuterAnimationTime = 300;
 function Animated(id: number) {
@@ -32,13 +31,14 @@ function Animated(id: number) {
     });
 
     return Object.assign(box, {
+        can_destory: false,
         dismiss() {
-            let timeout = 0;
-            if (!widget.close_no_delay) timeout = OuterAnimationTime + InnerAnimationTime * 2;
-            Utils.timeout(timeout, () => {
-                outer.reveal_child = false;
-                Utils.timeout(OuterAnimationTime, () => {
-                    inner.reveal_child = false;
+            outer.reveal_child = false;
+            Utils.timeout(OuterAnimationTime, () => {
+                inner.reveal_child = false;
+                Utils.timeout(InnerAnimationTime + 100, () => {
+                    this.can_destory = true;
+                    box.destroy();
                 });
             });
         },
@@ -82,6 +82,7 @@ function PopupList() {
     });
     interface Destroyable {
         destroy: () => void;
+        can_destory: boolean;
     }
     const destroys: Destroyable[] = [];
     let notifying = false;
@@ -91,13 +92,21 @@ function PopupList() {
         w.dismiss();
         map.delete(id);
         destroys.push(w);
-        if (map.size === 0) {
-            notifying = false;
-            Utils.timeout(OuterAnimationTime * 2 + InnerAnimationTime * 2 + 300, () => {
-                if (notifying) return;
-                while (destroys.length) destroys.pop()?.destroy();
-            });
-        }
+        // if (map.size === 0) {
+        //     notifying = false;
+        //     Utils.timeout(OuterAnimationTime * 2 + InnerAnimationTime * 2 + 300, () => {
+        //         if (notifying) return;
+        //         while (destroys.length) {
+        //             const dest = destroys.pop();
+        //             if (!dest) continue;
+        //             if (dest.can_destory) {
+        //                 dest.destroy();
+        //             } else {
+        //                 destroys.push(dest);
+        //             }
+        //         }
+        //     });
+        // }
     }
 
     return box
@@ -126,68 +135,102 @@ function Notification(n: NotificationType) {
         value: 1,
     });
     let interval = setInterval(() => {
-        t--;
+        t -= 15;
         progress.value = t / n.timeout;
         if (t <= 0) {
             clearInterval(interval);
             progress.value = 0;
         }
-    }, 1);
-    const eb = Object.assign(
-        Widget.EventBox({
-            width_request: 400,
-            height_request: 1,
-            hpack: "start",
-            class_name: "notification",
-            child: Widget.Box({
-                children: [
-                    Widget.Box({
-                        class_name: "notification-icon",
-                        width_request: 70,
-                        height_request: 70,
-                        child: NotificationIcon(n),
-                    }),
-                    Widget.Box({
-                        vertical: true,
-                        children: [
-                            Widget.Label({
-                                hexpand: true,
-                                hpack: "start",
-                                class_name: "notification-title",
-                                label: n.summary,
-                                max_width_chars: 30,
-                            }),
-                            Widget.Label({
-                                hpack: "start",
-                                hexpand: true,
-                                class_name: "notification-body",
-                                max_width_chars: 35,
-                                lines: 2,
-                                ellipsize: Pango.EllipsizeMode.END,
-                                wrap: true,
-                                label: n.body,
-                            }),
-                            Widget.Box({
-                                vexpand: true,
-                                child: progress,
-                                css: "padding: 0px 8px 5px 0px;",
-                            }),
-                        ],
-                    }),
-                ],
-            }),
+    }, 15);
+    progress.on("destroy", () => clearInterval(interval));
+
+    const actions_box = Widget.Box({
+        hpack: "center",
+        hexpand: true,
+        spacing: 8,
+    });
+    const eb = Widget.EventBox({
+        width_request: 400,
+        height_request: 1,
+        hpack: "start",
+        class_name: "notification",
+        child: Widget.Box({
+            vertical: true,
+            children: [
+                Widget.Box({
+                    class_name: "notification-box",
+                    children: [
+                        Widget.Box({
+                            class_name: "notification-icon",
+                            width_request: 70,
+                            height_request: 70,
+                            child: NotificationIcon(n),
+                        }),
+                        Widget.Box({
+                            vertical: true,
+                            children: [
+                                Widget.Label({
+                                    hexpand: true,
+                                    hpack: "start",
+                                    class_name: "notification-title",
+                                    label: n.summary,
+                                    max_width_chars: 30,
+                                }),
+                                Widget.Label({
+                                    hpack: "start",
+                                    hexpand: true,
+                                    class_name: "notification-body",
+                                    max_width_chars: 40,
+                                    wrap_mode: Pango.WrapMode.WORD_CHAR,
+                                    wrap: true,
+                                    label: n.body,
+                                }),
+                                Widget.Box({
+                                    vexpand: true,
+                                    child: progress,
+                                    css: "padding: 5px 8px 5px 0px;",
+                                }),
+                            ],
+                        }),
+                    ],
+                }),
+                actions_box,
+            ],
         }),
-        {
-            close_no_delay: false,
-        }
-    );
+    });
     eb.on_secondary_click = () => {
-        eb.close_no_delay = true;
-        notifications.emit("closed", n.id);
+        n.close();
     };
+    n.actions.forEach((a) => {
+        if (a.id === "default") {
+            eb.on_primary_click = () => {
+                n.close();
+                n.invoke("default");
+            };
+            return;
+        }
+        print(a.id);
+        const w = Widget.Box({
+            css: "padding-bottom: 5px;",
+            child: Widget.EventBox({
+                class_name: "notification-action",
+                on_primary_click: () => {
+                    n.close();
+                    n.invoke(a.id);
+                },
+                child: Widget.Label({
+                    class_name: "notification-action-label",
+                    label: a.label,
+                }),
+            }),
+        });
+
+        actions_box.children = [w, ...actions_box.children];
+    });
+
     return eb;
 }
-function SetupNotifications() {
+function Notifications() {
     const w = Widget.Window({
         name: `notifications`,
         anchor: ["top", "right"],
@@ -195,9 +238,10 @@ function SetupNotifications() {
         layer: "overlay",
         margins: [47, 0, 0, 0],
         css: "background: transparent;",
+        keymode: "none",
         child: PopupList(),
     });
 
     return w;
 }
-export { SetupNotifications as Notifications };
+export { Notifications };
