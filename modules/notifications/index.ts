@@ -1,10 +1,12 @@
 const notifications = await Service.import("notifications");
 import Pango from "types/@girs/pango-1.0/pango-1.0";
+import { sleep } from "utils";
 import { Notification as NotificationType } from "types/service/notifications";
 const MarginTop = 55;
 const MarginRight = 7;
 const InnerAnimationTime = 100;
 const OuterAnimationTime = 300;
+export const IsShow = Variable(true);
 function Animated(id: number) {
     const n = notifications.getNotification(id)!;
     const widget = Notification(n);
@@ -26,21 +28,21 @@ function Animated(id: number) {
     });
 
     Utils.idle(() => {
+        outer.transition_duration = 0;
         outer.reveal_child = true;
-        Utils.timeout(OuterAnimationTime, () => {
-            inner.reveal_child = true;
-        });
+        inner.transition_duration = InnerAnimationTime;
+        inner.reveal_child = true;
     });
 
     return Object.assign(box, {
         can_destory: false,
         dismiss() {
+            outer.transition_duration = OuterAnimationTime;
             outer.reveal_child = false;
             Utils.timeout(OuterAnimationTime, () => {
+                inner.transition_duration = 0;
                 inner.reveal_child = false;
-                Utils.timeout(InnerAnimationTime + 100, () => {
-                    this.can_destory = true;
-                });
+                this.can_destory = true;
             });
         },
     });
@@ -86,7 +88,7 @@ function PopupList() {
         can_destory: boolean;
     }
     const destroys: Destroyable[] = [];
-    let notifying = false;
+    let destroying = false;
     function remove(_: unknown, id: number) {
         const w = map.get(id);
         if (!w) return;
@@ -94,9 +96,8 @@ function PopupList() {
         map.delete(id);
         destroys.push(w);
         if (map.size === 0) {
-            notifying = false;
-            Utils.timeout(OuterAnimationTime + InnerAnimationTime + 100, () => {
-                if (notifying) return;
+            Utils.timeout(OuterAnimationTime, () => {
+                destroying = true;
                 while (destroys.length) {
                     const dest = destroys.pop();
                     if (!dest) continue;
@@ -106,6 +107,7 @@ function PopupList() {
                         destroys.push(dest);
                     }
                 }
+                destroying = false;
             });
         }
     }
@@ -114,10 +116,15 @@ function PopupList() {
         .hook(
             notifications,
             (_, id: number) => {
+                if (!IsShow.value) return;
                 if (id !== undefined) {
                     if (map.has(id)) remove(null, id);
                     if (notifications.dnd) return;
-                    notifying = true;
+                    Utils.idle(async () => {
+                        while (destroying) {
+                            await sleep(1);
+                        }
+                    });
                     const w = Animated(id);
                     map.set(id, w);
                     box.children = [w, ...box.children];

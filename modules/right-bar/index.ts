@@ -1,3 +1,7 @@
+import { IsShow as NotifyIsShow } from "../notifications/index";
+const MarginTop = 55;
+const MarginRight = 7;
+const MarginBottom = 7;
 const Top = () =>
     Widget.Box({
         class_name: "top",
@@ -34,35 +38,69 @@ const Bottom = () =>
     });
 
 function RightBar() {
-    const reveal = Variable(false);
-    const r = Widget.Revealer({
+    const is_show = Variable(false);
+    const InnerAnimationTime = 100;
+    const OuterAnimationTime = 300;
+    const box = Widget.Box({
+        class_name: "right-bar",
+        vertical: true,
+        children: [Top(), Center(), Bottom()],
+    });
+    const inner = Widget.Revealer({
         transition: "slide_right",
-        transition_duration: 100,
-        reveal_child: reveal.bind(),
+        transition_duration: InnerAnimationTime,
+        reveal_child: false,
         vexpand: true,
-        vpack: "baseline",
-        child: Widget.Box({
-            class_name: "right-bar",
-            vertical: true,
-            children: [Top(), Center(), Bottom()],
-        }),
+        child: box,
+    });
+    const outer = Widget.Revealer({
+        transition: "crossfade",
+        transition_duration: OuterAnimationTime,
+        reveal_child: false,
+        vexpand: true,
+        child: inner,
+    });
+    const show = () => {
+        NotifyIsShow.setValue(false);
+        outer.transition_duration = 0;
+        outer.reveal_child = true;
+        inner.transition_duration = InnerAnimationTime;
+        inner.reveal_child = true;
+    };
+    const close = () => {
+        NotifyIsShow.setValue(true);
+        outer.transition_duration = OuterAnimationTime;
+        outer.reveal_child = false;
+        Utils.timeout(OuterAnimationTime, () => {
+            inner.transition_duration = 0;
+            inner.reveal_child = false;
+        });
+    };
+    Utils.watch(null, is_show, () => {
+        if (is_show.value) {
+            show();
+        } else {
+            close();
+        }
     });
     const w = Widget.Window({
         name: `right-bar`,
         anchor: ["right", "top", "bottom"],
-        exclusivity: "normal",
+        exclusivity: "ignore",
         layer: "overlay",
         css: "background-color: transparent;",
+        height_request: 1,
+        width_request: 1,
+        margins: [MarginTop, MarginRight, MarginBottom, 0],
         child: Widget.Box({
             hpack: "fill",
             class_name: "notifications",
-            child: r,
+            child: outer,
         }),
     });
-    Object.assign(w, {
-        reveal: reveal,
-    });
 
-    return w;
+    return Object.assign(w, {
+        is_show: is_show,
+    });
 }
 export { RightBar };

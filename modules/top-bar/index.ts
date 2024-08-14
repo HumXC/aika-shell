@@ -4,7 +4,7 @@ const systemtray = await Service.import("systemtray");
 const network = await Service.import("network");
 const mpris = await Service.import("mpris");
 const players = mpris.bind("players");
-
+import { RightBar } from "modules/right-bar/index";
 const date = Variable("", {
     poll: [1000, 'date "+%H:%M %S %m/%d 周%a"'],
 });
@@ -404,18 +404,18 @@ function Media() {
     });
 }
 
-function OpenRightBar(right_bar) {
+function OpenRightBar(right_bar: ReturnType<typeof RightBar>) {
     if (right_bar === null) throw new Error("Right bar is null");
     return Widget.EventBox({
         class_name: "open-right-bar",
         onPrimaryClick: () => {
-            right_bar.reveal.setValue(!right_bar.reveal.value);
+            right_bar.is_show.setValue(!right_bar.is_show.value);
         },
         child: Widget.Icon({
             size: 24,
             width_request: 30,
             height_request: 30,
-            icon: right_bar.reveal.bind().as((e) => {
+            icon: right_bar.is_show.bind().as((e) => {
                 return e ? "sidebar-collapse-right" : "sidebar-expand-right";
             }),
         }),
