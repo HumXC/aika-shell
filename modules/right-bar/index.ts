@@ -43,6 +43,7 @@ const Bottom = () =>
     Widget.Box({
         class_name: "bottom",
         vpack: "end",
+        height_request: 100,
         children: [],
     });
 
@@ -107,7 +108,7 @@ function RightBar() {
             child: outer,
         }),
     });
-    show();
+    show(); // DEBUG
     return Object.assign(w, {
         is_show: is_show,
     });

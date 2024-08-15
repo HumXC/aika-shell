@@ -6,9 +6,8 @@ const mpris = await Service.import("mpris");
 const players = mpris.bind("players");
 import time from "services/time";
 import network_speed from "services/network-speed";
+import brightness from "services/ddc-brightness";
 import { RightBar } from "modules/right-bar/index";
-
-let ifstatePrevDate = { kernel: {} };
 
 const WifiIndicator = () => {
     const value = Widget.Revealer({
@@ -149,30 +148,7 @@ function Volume() {
     });
 }
 function Brightness() {
-    const icons = {
-        80: "high",
-        50: "medium",
-        25: "low",
-        0: "off",
-    };
-    function getIcon() {
-        const icon = [80, 50, 25, 0].find((threshold) => {
-            return threshold <= light.value;
-        });
-        // @ts-ignore
-        return `display-brightness-${icons[icon]}-symbolic`;
-    }
-
-    const light = Variable(100);
-    let maxValue = 100;
-    Utils.execAsync("ddcutil getvcp 10").then((output) => {
-        const regex = /current value\s*=\s*(\d+)\s*,\s*max value\s*=\s*(\d+)/;
-        const match = output.match(regex);
-        if (match) {
-            light.setValue(parseInt(match[1], 10));
-            maxValue = parseInt(match[2], 10);
-        }
-    });
+    const light = Variable(brightness.light);
     const lock = Variable(false);
     const value = Widget.Revealer({
         class_name: "brightness-value",
@@ -190,9 +166,12 @@ function Brightness() {
             Utils.timeout(100, () => (value.reveal_child = false));
             if (lock.value) return;
             lock.setValue(true);
-            Utils.execAsync(`ddcutil setvcp 10 ${Math.floor(maxValue * (light.value / 100))}`)
-                .then(() => lock.setValue(false))
-                .catch((error) => print("ddcutil error: ", error));
+            try {
+                brightness.light = light.value;
+            } catch (e) {
+                console.error(e);
+            }
+            lock.setValue(false);
         },
         on_scroll_down: () => {
             if (light.value > 0) light.setValue(light.value - 1);
@@ -222,7 +201,7 @@ function Brightness() {
                     width_request: 30,
                     height_request: 30,
                     css: "padding: 0px 0px 1px 2px;",
-                    icon: Utils.watch(getIcon(), light, getIcon),
+                    icon: brightness.bind("icon_name"),
                 }),
                 value,
             ],
