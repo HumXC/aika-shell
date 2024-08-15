@@ -1,0 +1,54 @@
+.media {
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(30, 41, 53, 0.836);
+    border: 1px solid rgb(51, 66, 83);
+    .cover-box {
+        .cover-default {
+            border-radius: 10px;
+        }
+        .cover-img {
+            border-radius: 10px;
+            background-size: cover;
+        }
+    }
+    .info-controller-box {
+        padding: 0px 5px 3px 5px;
+        .info {
+            .title {
+                font-size: 14px;
+                color: aliceblue;
+            }
+            .artist {
+                font-size: 12px;
+                color: rgba(240, 248, 255, 0.87);
+            }
+        }
+        .progress trough {
+            margin-bottom: 3px;
+            margin-top: 10px;
+            min-height: 2px;
+            border-radius: 5px;
+            background-color: rgba(179, 179, 179, 0.37);
+            progress {
+                min-height: 2px;
+                border-radius: 5px;
+                background-color: rgb(48, 145, 71);
+            }
+        }
+        .controller {
+            padding-top: 10px;
+            .prev,
+            .play-pause,
+            .next {
+                border-radius: 20px;
+                background: rgba(84, 94, 109, 0.656);
+            }
+            .prev:hover,
+            .play-pause:hover,
+            .next:hover {
+                background: rgba(95, 107, 125, 0.881);
+            }
+        }
+    }
+}

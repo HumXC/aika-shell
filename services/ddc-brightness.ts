@@ -126,7 +126,9 @@ function getLight(displayID: number): { light: number; max: number } {
 }
 function setLight(displayID: number, light: number) {
     const cvp = 10;
-    Utils.exec(`ddcutil setvcp ${cvp} ${light} --display=${displayID}`);
+    Utils.execAsync(`ddcutil setvcp ${cvp} ${light} --display=${displayID}`).catch((err) =>
+        console.error("ddcutil setvcp error:", err)
+    );
 }
 class DDCBrightness extends Service {
     static {

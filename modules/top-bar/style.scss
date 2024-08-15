@@ -83,24 +83,27 @@
         font-size: 18px;
     }
     .player {
-        background: rgba(255, 255, 255, 0.395);
+        background: rgba(172, 172, 172, 0.292);
     }
     .player-playing {
         background: linear-gradient(
-                270deg,
+                220deg,
                 rgb(205, 122, 210),
-                rgba(211, 209, 210, 0.741),
+                rgba(143, 196, 232, 0.741),
                 rgb(213, 113, 218),
-                rgba(125, 112, 210, 0.741),
-                rgb(235, 145, 239)
+                rgba(125, 116, 190, 0.741),
+                rgb(239, 145, 223)
             )
             center / cover;
         background-size: 200% 200%;
-        animation: BackgroundChange 10s steps(90) infinite;
+        animation: BackgroundChange 5s steps(90) infinite;
     }
     .player-control-button {
         border-radius: 20px;
-        background: rgba(225, 90, 90, 0.602);
+        background: rgba(229, 112, 138, 0.704);
+    }
+    .player-control-button:hover {
+        background: rgb(242, 127, 152);
     }
     .workspaces {
         border-radius: 20px;
@@ -130,5 +133,22 @@
         border-radius: 100px;
         background: rgba(255, 255, 255, 0.695);
         color: rgb(27, 27, 27);
+    }
+
+    .wallpaper {
+        background: rgba(38, 120, 143, 0.836);
+        border-radius: 20px;
+        .selctor {
+            .item {
+                background: rgba(30, 77, 90, 0.836);
+                border-radius: 10px;
+                label {
+                    padding: 2px 6px 2px 6px;
+                }
+            }
+            .selected {
+                background: rgba(97, 178, 200, 0.836);
+            }
+        }
     }
 }

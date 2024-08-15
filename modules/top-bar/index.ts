@@ -8,7 +8,7 @@ import time from "services/time";
 import network_speed from "services/network-speed";
 import brightness from "services/ddc-brightness";
 import { RightBar } from "modules/right-bar/index";
-
+import { Data, SaveData } from "data";
 const WifiIndicator = () => {
     const value = Widget.Revealer({
         class_name: "wifi-indicator-value",
@@ -166,6 +166,7 @@ function Brightness() {
             Utils.timeout(100, () => (value.reveal_child = false));
             if (lock.value) return;
             lock.setValue(true);
+            Utils.idle(() => {});
             try {
                 brightness.light = light.value;
             } catch (e) {
@@ -247,7 +248,7 @@ function SysTray() {
 function Player(player) {
     const FALLBACK_ICON = "audio-x-generic-symbolic";
     const PLAY_ICON = "media-playback-start-symbolic";
-    const PAUSE_ICON = "media-playback-pause";
+    const PAUSE_ICON = "media-playback-pause-symbolic";
     const PREV_ICON = "media-skip-backward-symbolic";
     const NEXT_ICON = "media-skip-forward-symbolic";
     const play_status = Variable("Stopped");
@@ -336,6 +337,7 @@ function Player(player) {
 }
 function Media() {
     return Widget.Box({
+        spacing: 8,
         visible: players.as((p) => p.filter((p) => p.can_play).length > 0),
         children: players.as((p) => p.filter((p) => p.can_play).map(Player)),
     });
@@ -358,6 +360,102 @@ function OpenRightBar(right_bar: ReturnType<typeof RightBar>) {
         }),
     });
 }
+
+function Wallpaper() {
+    const fps = 160;
+    const step = 160;
+    const interval = 120000;
+    const swww_args = `--transition-fps ${fps} --transition-step ${step} --transition-type wipe --transition-angle 30`;
+    const root_dir = `${Utils.HOME}/Pictures/Wallpaper`;
+    const dirs = Utils.exec(`find ${root_dir} -type d`)
+        .split("\n")
+        .filter((d) => d !== root_dir);
+    const dest_dir = Variable("");
+    if (!Data.wallpaper_dir) {
+        Data.wallpaper_dir = root_dir;
+        SaveData();
+    }
+    dest_dir.setValue(Data.wallpaper_dir);
+    const find_wallpaper = (dir: string) => {
+        const allow_img = [".png", ".jpeg", ".gif", ".webp"];
+        let cmd = `find ${dir} -type f -name "*.jpg"`;
+        for (const ext of allow_img) {
+            cmd += ` -o -name "*${ext}"`;
+        }
+        const images = Utils.exec(cmd).split("\n");
+        return images[Math.floor(Math.random() * images.length)];
+    };
+    const change_wallpaper = () => {
+        if (dest_dir.value === "") return;
+        const img = find_wallpaper(dest_dir.value);
+        if (img === "") return;
+        Utils.execAsync(`swww img ${swww_args} "${img}"`).catch((e) => console.log(e));
+    };
+    setInterval(change_wallpaper, interval);
+    const button = (path: string) => {
+        return Widget.EventBox({
+            child: Widget.Label({
+                label: path.split("/").pop(),
+            }),
+            on_primary_click: () => {
+                dest_dir.setValue(path);
+                Data.wallpaper_dir = path;
+                SaveData();
+            },
+            class_name: dest_dir.bind().as((p) => (p === path ? "item selected" : "item")),
+        });
+    };
+    const selctor = Widget.Revealer({
+        class_name: "selctor",
+        revealChild: false,
+        transition_duration: 140,
+        transition: "slide_right",
+        child: Widget.Box({
+            spacing: 12,
+            vexpand: false,
+            vpack: "center",
+            margin_left: 6,
+            margin_right: 12,
+            children: dirs.map(button),
+        }),
+    });
+    let closing = false;
+    return Widget.EventBox({
+        on_secondary_click: () => (selctor.reveal_child = !selctor.reveal_child),
+        on_scroll_down: () => (audio.speaker.volume -= 0.01),
+        on_scroll_up: () => {
+            if (audio.speaker.volume < 1) audio.speaker.volume += 0.01;
+        },
+        on_primary_click: () => {
+            if (selctor.reveal_child) return;
+            change_wallpaper();
+        },
+        on_hover: () => {
+            closing = false;
+        },
+        on_hover_lost: () => {
+            closing = true;
+            Utils.timeout(5000, () => {
+                if (!closing) return;
+                selctor.reveal_child = false;
+            });
+        },
+        child: Widget.Box({
+            class_name: "wallpaper",
+            vpack: "center",
+            hpack: "center",
+            children: [
+                Widget.Icon({
+                    size: 20,
+                    width_request: 30,
+                    height_request: 30,
+                    icon: "preferences-desktop-wallpaper-symbolic",
+                }),
+                selctor,
+            ],
+        }),
+    });
+}
 function Left() {
     return Widget.Box({
         spacing: 8,
@@ -376,7 +474,14 @@ function Right(right_bar) {
     return Widget.Box({
         hpack: "end",
         spacing: 8,
-        children: [Media(), Volume(), Brightness(), NetworkIndicator(), OpenRightBar(right_bar)],
+        children: [
+            Media(),
+            Wallpaper(),
+            Volume(),
+            Brightness(),
+            NetworkIndicator(),
+            OpenRightBar(right_bar),
+        ],
     });
 }
 function TopBar(monitor = 0, right_bar) {

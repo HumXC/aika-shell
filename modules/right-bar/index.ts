@@ -1,8 +1,10 @@
 import { IsShow as NotifyIsShow } from "../notifications/index";
 import time from "services/time";
+import Media from "./media";
 const MarginTop = 55;
 const MarginRight = 7;
 const MarginBottom = 7;
+const is_show = Variable(false);
 const Clock = () =>
     Widget.Box({
         class_name: "clock",
@@ -37,7 +39,8 @@ const Center = () =>
         class_name: "center",
         width_request: 400,
         vexpand: true,
-        children: [],
+        vpack: "start",
+        children: [Media()],
     });
 const Bottom = () =>
     Widget.Box({
@@ -48,12 +51,12 @@ const Bottom = () =>
     });
 
 function RightBar() {
-    const is_show = Variable(false);
-    const InnerAnimationTime = 100;
-    const OuterAnimationTime = 300;
+    const InnerAnimationTime = 30;
+    const OuterAnimationTime = 100;
     const box = Widget.Box({
-        class_name: "right-bar",
         vertical: true,
+        class_name: "right-bar",
+        spacing: 12,
         children: [Top(), Center(), Bottom()],
     });
     const inner = Widget.Revealer({
@@ -104,13 +107,12 @@ function RightBar() {
         margins: [MarginTop, MarginRight, MarginBottom, 0],
         child: Widget.Box({
             hpack: "fill",
-            class_name: "notifications",
             child: outer,
         }),
     });
-    show(); // DEBUG
+    // show(); // DEBUG
     return Object.assign(w, {
         is_show: is_show,
     });
 }
-export { RightBar };
+export { RightBar, is_show };
