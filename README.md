@@ -1,11 +1,15 @@
-# my ags config
 
-需要额外安装
+# Starter Config
 
-ddcutil 用于控制外置显示器亮度
+if suggestions don't work, first make sure
+you have TypeScript LSP working in your editor
 
-sassc 用于编译 scss 文件
+if you do not want typechecking only suggestions
 
-bun 用于编译 ts 文件
+```json
+// tsconfig.json
+"checkJs": false
+```
 
-`ags --init -c ~/.config/ags/config.js`
+types are symlinked to:
+/home/HumXC/.local/share/com.github.Aylur.ags/types
