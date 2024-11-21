@@ -15,6 +15,7 @@ export default function Clock({ fontSize }: { fontSize: number }) {
             })}
             css={`
                 font-size: ${fontSize}px;
+                font-weight: bold;
             `}
         />
     );

@@ -45,22 +45,22 @@ export default function NetSpeed({ height }: { height: number }) {
                 `}
             >
                 <label
-                    label={" "}
+                    label={""}
                     css={`
                         font-size: ${fontSize}px;
-                        padding: 1px 0 0 0;
+                        padding: 1px 12px 0 0;
                     `}
                 />
                 <label
                     css={"font-size:" + (fontSize - 2) + "px;" + "padding: 2px 0 0 0;"}
                     label={bind(networkSpeed, "speed").as((speed) => speed.download)}
                 />
-                <Space space={10} />
+                <Space space={8} />
                 <label
-                    label={" "}
+                    label={""}
                     css={`
                         font-size: ${fontSize}px;
-                        padding: 1px 0 0 0;
+                        padding: 1px 12px 0 0;
                     `}
                 />
                 <label
