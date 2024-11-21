@@ -1,2 +1,4 @@
-/types
-/option.ts
+@girs/
+node_modules/
+.direnv
+.envrc

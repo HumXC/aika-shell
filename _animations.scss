@@ -1,0 +1,23 @@
+@mixin background-flow(
+    $size: 500%,
+    // 背景尺寸
+    $duration: 120s,
+    // 动画持续时间
+    $timing: linear,
+    // 动画时间函数
+    $iteration: infinite // 动画重复次数
+) {
+    background-size: $size; // 设置背景尺寸
+    animation: BackgroundFlowFrame $duration $timing $iteration; // 设置动画
+    @keyframes BackgroundFlowFrame {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
+}
