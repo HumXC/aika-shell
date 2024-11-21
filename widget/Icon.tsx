@@ -8,7 +8,6 @@ export default function Icon({
     className?: string;
 }) {
     const margin = size / 8;
-    print(margin);
     return (
         <box className={className} heightRequest={size} widthRequest={size}>
             <icon
