@@ -1,11 +1,21 @@
 import { exec } from "astal";
 import { GObject, register, property, GLib, signal } from "astal/gobject";
 import { Gtk } from "astal/gtk3";
-function formatBytes(bytes: number) {
-    if (bytes < 1e6) {
-        return `${(bytes / 1024).toFixed(2)} KB`;
+function formatBytes(bytes: number): string {
+    function formatValue(value: number): string {
+        // 判断是否需要保留小数位
+        return value % 1 === 0 ? `${value}` : `${value.toFixed(2)}`;
+    }
+
+    if (bytes >= 800 * 1024 * 1024) {
+        // 超过 800 MB，显示为 GB
+        return `${formatValue(bytes / 1e9)} GB`;
+    } else if (bytes >= 800 * 1024) {
+        // 超过 800 KB，但未达到 800 MB，显示为 MB
+        return `${formatValue(bytes / 1e6)} MB`;
     } else {
-        return `${(bytes / 1e6).toFixed(2)} MB`;
+        // 小于 800 KB，显示为 KB
+        return `${formatValue(bytes / 1024)} KB`;
     }
 }
 @register()
@@ -66,7 +76,7 @@ class NetworkSpeed extends GObject.Object {
         for (const iface of this.iface) {
             const bs = this.getBytes(iface);
             const item = new Gtk.MenuItem({
-                label: iface + " (" + bs.download + "/" + bs.upload + ")",
+                label: iface + " " + bs.download + " / " + bs.upload,
             });
             item.connect("activate", () => {
                 this.currentIFace = iface;
