@@ -1,9 +1,14 @@
-import { App, Astal, Gdk } from "astal/gtk3";
+import { App, Astal, Gdk, Gtk, Widget } from "astal/gtk3";
 import { exec, execAsync, Gio } from "astal";
 
-function Window(gdkmonitor: Gdk.Monitor, index: number) {
-    const img = `/tmp/screenshot-${index}.png`;
-    exec(["grim", "-l", "0", img]);
+function Window(gdkmonitor: Gdk.Monitor, index: number, args: string[]) {
+    let imgType = "png";
+    for (let i = args.indexOf("-t"); i !== -1; ) {
+        imgType = args[i + 1];
+        break;
+    }
+    const img = `/tmp/screenshot-${index}.${imgType}`;
+    exec(["bash", "-c", "grim " + args.join(" ") + " " + img]);
     return (
         <window
             onDestroy={() => {
@@ -32,7 +37,7 @@ function Window(gdkmonitor: Gdk.Monitor, index: number) {
                 }
             }}
             application={App}
-            namespace={"top-bar"}
+            namespace={"screen-mask"}
             css={`
                 background-image: url("${img}");
             `}
@@ -45,15 +50,42 @@ function Window(gdkmonitor: Gdk.Monitor, index: number) {
     );
 }
 function Handler(request: string) {
-    const windows = App.get_monitors().map((monitor, index) => {
-        return Window(monitor, index);
-    });
+    const req = request.split(" ").filter((s) => s.length > 0);
+    let args = [];
+    let cmd = "";
+    for (let i = 1; i < req.length; i++) {
+        const c = req[i];
+        if (["-s", "-g", "-t", "-q", "-l", "-o"].indexOf(c) != -1) {
+            i++;
+            args.push(c);
+            args.push(req[i]);
+            continue;
+        } else if (c === "-c") {
+            args.push(c);
+            continue;
+        }
+        cmd = req.slice(i).join(" ");
+        break;
+    }
+    const windows: Gtk.Widget[] = [];
     const close = () => {
         // @ts-ignore
         windows.forEach((window) => window.close());
     };
+    const monitors = App.get_monitors();
+    for (let i = 0; i < monitors.length; i++) {
+        const monitor = monitors[i];
+        try {
+            windows.push(Window(monitor, i, args));
+        } catch (error) {
+            close();
+            // @ts-ignore
+            return error.message;
+        }
+    }
+
     try {
-        const result = exec(["bash", "-c", request.replace("screenmask ", "")]);
+        const result = exec(["bash", "-c", cmd]);
         close();
         return result;
     } catch (error) {
