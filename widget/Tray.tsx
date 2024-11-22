@@ -1,6 +1,6 @@
 import ATray from "gi://AstalTray";
 import { App, Astal, Gtk, Gdk } from "astal/gtk3";
-import { bind, Variable } from "astal";
+import { bind, idle, Variable } from "astal";
 export default function Tray({ height }: { height: number }) {
     const outerPadding = height / 8;
     const tray = ATray.get_default();
@@ -23,7 +23,11 @@ export default function Tray({ height }: { height: number }) {
                             className={"TrayItem"}
                             tooltipMarkup={bind(item, "tooltipMarkup")}
                             tooltipText={bind(item, "title")}
-                            onDestroy={() => menu?.destroy()}
+                            onDestroy={() => {
+                                setTimeout(() => {
+                                    menu?.destroy();
+                                }, 100);
+                            }}
                             onHover={(self) => (self.className = "TrayItem-hover")}
                             onHoverLost={(self) => (self.className = "TrayItem")}
                             onClickRelease={(self, e) => {
