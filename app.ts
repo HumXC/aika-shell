@@ -1,6 +1,6 @@
 import { App } from "astal/gtk3";
 import style from "./style.scss";
-import Bar from "./widget/Bar";
+import TopBar from "./widget/top-bar";
 import { Handle, Register } from "./RequestHandler";
 import Screenshot from "./handler/Screenshot";
 Register("screenshot", Screenshot);
@@ -9,6 +9,6 @@ App.start({
     css: style,
     icons: `${SRC}/icons`,
     main() {
-        App.get_monitors().map(Bar);
+        App.get_monitors().map(TopBar);
     },
 });

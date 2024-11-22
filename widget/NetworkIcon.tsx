@@ -1,6 +1,6 @@
 import { Variable } from "astal";
 import Network from "gi://AstalNetwork";
-import EventIcon from "./EventIcon";
+import { EventIcon } from "./base";
 import { setHoverClassName } from "../utils";
 // padding1 是 断网图标的边距
 // padding2 是 联网图标的边距

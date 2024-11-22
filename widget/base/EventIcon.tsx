@@ -1,5 +1,5 @@
 import { Binding, GObject } from "astal";
-import { Astal, ConstructProps, Gtk, Widget, astalify } from "astal/gtk3";
+import { Astal, ConstructProps, Gtk, astalify } from "astal/gtk3";
 import { BindableChild } from "astal/gtk3/astalify";
 import { EventBox, EventBoxProps } from "astal/gtk3/widget";
 class EventIcon extends astalify(EventBox) {

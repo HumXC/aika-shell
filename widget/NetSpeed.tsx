@@ -1,6 +1,6 @@
 import { bind, Variable } from "astal";
 import NetworkSpeed from "../lib/NetworkSpeed";
-import Space from "./Space";
+import { Space } from "./base";
 import { Astal, Gdk, Gtk } from "astal/gtk3";
 
 export default function NetSpeed({ height }: { height: number }) {

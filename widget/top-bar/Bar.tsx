@@ -1,12 +1,9 @@
 import { App, Astal, Gtk, Gdk } from "astal/gtk3";
-import { bind, Variable } from "astal";
-import Tray from "./Tray";
+import Tray from "../Tray";
 import Clock from "./Clock";
-import NetSpeed from "./NetSpeed";
-import Space from "./Space";
-import EventIcon from "./EventIcon";
-import DevicesIcon from "./DevicesIcon";
-import BrightnessIcon from "./BrightnessIcon";
+import NetSpeed from "../NetSpeed";
+import { EventIcon, Space } from "../base";
+import DevicesIcon from "../DevicesIcon";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return (
         <window

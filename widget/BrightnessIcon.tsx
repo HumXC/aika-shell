@@ -1,6 +1,6 @@
 import { bind } from "astal";
 import DDCBrightness from "../lib/DDCBrightness";
-import EventIcon from "./EventIcon";
+import { EventIcon } from "./base";
 import { Astal } from "astal/gtk3";
 export default function BrightnessIcon({ size }: { size: number }) {
     const ddc = new DDCBrightness();

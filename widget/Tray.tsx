@@ -1,6 +1,6 @@
 import ATray from "gi://AstalTray";
-import { App, Astal, Gtk, Gdk } from "astal/gtk3";
-import { bind, idle, Variable } from "astal";
+import { App, Astal, Gdk } from "astal/gtk3";
+import { bind } from "astal";
 export default function Tray({ height }: { height: number }) {
     const outerPadding = height / 8;
     const tray = ATray.get_default();
