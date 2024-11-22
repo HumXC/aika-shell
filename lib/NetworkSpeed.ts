@@ -1,12 +1,11 @@
 import { exec } from "astal";
 import { GObject, register, property, GLib, signal } from "astal/gobject";
 import { Gtk } from "astal/gtk3";
-
-function formatSpeed(bytesPerSecond: number) {
-    if (bytesPerSecond < 1e6) {
-        return `${(bytesPerSecond / 1024).toFixed(2)} KB/s`;
+function formatBytes(bytes: number) {
+    if (bytes < 1e6) {
+        return `${(bytes / 1024).toFixed(2)} KB`;
     } else {
-        return `${(bytesPerSecond / 1e6).toFixed(2)} MB/s`;
+        return `${(bytes / 1e6).toFixed(2)} MB`;
     }
 }
 @register()
@@ -15,26 +14,29 @@ class NetworkSpeed extends GObject.Object {
         download: string;
         upload: string;
     };
-    @property(Object) declare speedBytes: {
-        download: number;
-        upload: number;
-    };
     @property(Object) declare iface: string[];
     @signal(Object) declare ifaceUpdate: (iface: string[]) => void;
     @property(String) declare currentIFace: string;
 
     private intervalId: GLib.Source;
 
+    // TODO
+    getBytes(iface: string): {
+        download: string;
+        upload: string;
+    } {
+        let result = {
+            download: "0 KB",
+            upload: "0 KB",
+        };
+        return result;
+    }
     prev_data: { kernel: any } | null = null;
     constructor() {
         super();
         this.speed = {
             download: "0 KB/s",
             upload: "0 KB/s",
-        };
-        this.speedBytes = {
-            download: 0,
-            upload: 0,
         };
         this.iface = [];
         this.currentIFace = "All";
@@ -81,12 +83,8 @@ class NetworkSpeed extends GObject.Object {
             }
         }
         this.speed = {
-            download: formatSpeed(totalRxBytes),
-            upload: formatSpeed(totalTxBytes),
-        };
-        this.speedBytes = {
-            download: totalRxBytes,
-            upload: totalTxBytes,
+            download: formatBytes(totalRxBytes) + "/s",
+            upload: formatBytes(totalTxBytes) + "/s",
         };
         if (this.iface.length !== ifaceList.length) {
             this.iface = ifaceList;
