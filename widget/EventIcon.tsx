@@ -2,7 +2,7 @@ import { Binding, GObject } from "astal";
 import { Astal, ConstructProps, Gtk, Widget, astalify } from "astal/gtk3";
 import { BindableChild } from "astal/gtk3/astalify";
 import { EventBox, EventBoxProps } from "astal/gtk3/widget";
-class Icon extends astalify(EventBox) {
+class EventIcon extends astalify(EventBox) {
     static {
         GObject.registerClass({ GTypeName: "EventIcon" }, this);
     }
@@ -23,11 +23,12 @@ class Icon extends astalify(EventBox) {
         );
     }
 }
-export default Icon;
 export type IcoProps = EventBoxProps &
-    ConstructProps<Icon, Astal.EventBox.ConstructorProps> & {
+    ConstructProps<EventIcon, Astal.EventBox.ConstructorProps> & {
         iconName: string | Binding<string>;
         size: number;
         className?: string;
         padding?: number;
     };
+
+export default EventIcon;

@@ -1,9 +1,17 @@
 import { setHoverClassName } from "../utils";
+import BrightnessIcon from "./BrightnessIcon";
 import NetworkIcon from "./NetworkIcon";
-export default function DevicesIcon({}) {
+export default function DevicesIcon({ size }: { size: number }) {
     return (
         <eventbox setup={(self) => setHoverClassName("DevicesIcon", self)}>
-            <NetworkIcon size={24} padding1={4} padding2={0} />
+            <box
+                css={`
+                    padding: 0 ${size / 6}px;
+                `}
+            >
+                <BrightnessIcon size={size - size / 6} />
+                <NetworkIcon size={size} padding1={size / 6} padding2={0} />
+            </box>
         </eventbox>
     );
 }

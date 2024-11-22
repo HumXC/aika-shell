@@ -1,3 +1,5 @@
+import { exec, execAsync, GObject, property, register } from "astal";
+
 const icons = {
     80: "high",
     50: "medium",
@@ -80,7 +82,7 @@ class Detect {
             if (trimmed.startsWith("Display")) {
                 currentDisplay = new Display();
                 const displayId = trimmed.split(" ")[1];
-                this.display[displayId] = currentDisplay;
+                this.display.set(displayId, currentDisplay);
             } else if (trimmed.startsWith("I2C bus:")) {
                 currentDisplay.i2c_bus = trimmed.split(":")[1].trim();
             } else if (trimmed.startsWith("DRM connector:")) {
@@ -109,14 +111,14 @@ class Detect {
         }
     }
 }
-function getLight(displayID: number): { light: number; max: number } {
+async function fetchLight(displayID: number): Promise<{ light: number; max: number }> {
     let result = {
         light: 0,
         max: 0,
     };
     const cvp = 10;
     const regex = /current value\s*=\s*(\d+)\s*,\s*max value\s*=\s*(\d+)/;
-    const output = Utils.exec(`ddcutil getvcp ${cvp} --display=${displayID}`);
+    const output = await execAsync(`ddcutil getvcp ${cvp} --display=${displayID}`);
     const match = output.match(regex);
     if (match) {
         result.light = parseInt(match[1], 10);
@@ -124,58 +126,54 @@ function getLight(displayID: number): { light: number; max: number } {
     }
     return result;
 }
-function setLight(displayID: number, light: number) {
+async function putLight(displayID: number, light: number) {
     const cvp = 10;
-    Utils.execAsync(`ddcutil setvcp ${cvp} ${light} --display=${displayID}`).catch((err) =>
-        console.error("ddcutil setvcp error:", err)
+    await execAsync(`ddcutil setvcp ${cvp} ${light} --display=${displayID}`).catch((err) =>
+        console.error(
+            "ddcutil setvcp failed for displayID:",
+            displayID,
+            "light:",
+            light,
+            "error:",
+            err
+        )
     );
 }
-class DDCBrightness extends Service {
-    static {
-        Service.register(
-            this,
-            {},
-            {
-                light: ["int", "rw"],
-                icon_name: ["string", "r"],
-            }
-        );
-    }
-    #display_max_brightness = 0;
-    #light = 0; // 0-100
-    #icon_name = get_icon(100);
-    get light() {
-        return this.#light;
-    }
-    set light(value: number) {
-        if (value < 0) value = 0;
-        if (value > 100) value = 100;
-        const val = Math.floor((value / 100) * this.#display_max_brightness);
-        setLight(1, val);
-        this.#light = value;
-        this.#icon_name = get_icon(this.#light);
-        this.emit("changed");
-        this.notify("light");
-        this.notify("icon_name");
-    }
-
-    get icon_name() {
-        return this.#icon_name;
-    }
+@register()
+class DDCBrightness extends GObject.Object {
+    @property(Number) declare light: number;
+    @property(String) declare iconName: string;
+    #displayMaxBrightness = 100;
+    #lock = false;
     constructor() {
         super();
-        const { light, max } = getLight(1);
-        this.#light = Math.floor((light / max) * 100);
-        this.#display_max_brightness = max;
-        this.#icon_name = get_icon(this.#light);
-        this.emit("changed");
-        this.notify("light");
-        this.notify("icon_name");
+        this.#displayMaxBrightness = 100;
+        this.iconName = get_icon(100);
+        fetchLight(1).then(({ light, max }) => {
+            this.light = Math.floor((light / max) * 100);
+            this.#displayMaxBrightness = max;
+            this.iconName = get_icon(this.light);
+
+            this.connect("notify::light", async () => {
+                let value = this.light;
+                if (value < 0) value = 0;
+                if (value > 100) value = 100;
+                if (value !== this.light) {
+                    this.light = value;
+                    return;
+                }
+                this.iconName = get_icon(this.light);
+
+                if (this.#lock) return;
+                this.#lock = true;
+                for (let light = -1; light != this.light; ) {
+                    light = this.light;
+                    const val = Math.floor((light / 100) * this.#displayMaxBrightness);
+                    await putLight(1, val);
+                }
+                this.#lock = false;
+            });
+        });
     }
 }
-
-// the singleton instance
-const service = new DDCBrightness();
-
-// export to use in other modules
-export default service;
+export default DDCBrightness;

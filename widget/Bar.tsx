@@ -4,8 +4,9 @@ import Tray from "./Tray";
 import Clock from "./Clock";
 import NetSpeed from "./NetSpeed";
 import Space from "./Space";
-import Icon from "./EventIcon";
+import EventIcon from "./EventIcon";
 import DevicesIcon from "./DevicesIcon";
+import BrightnessIcon from "./BrightnessIcon";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return (
         <window
@@ -18,7 +19,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
         >
             <centerbox heightRequest={1}>
                 <box halign={Gtk.Align.START}>
-                    <Icon iconName="nix-snowflake-colours" size={24} />
+                    <EventIcon iconName="nix-snowflake-colours" size={24} />
                     <Space space={8} />
                     <Tray height={24} />
                     <Space space={10} />
@@ -28,7 +29,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                     <Clock fontSize={16} />
                 </box>
                 <box halign={Gtk.Align.END}>
-                    <DevicesIcon />
+                    <DevicesIcon size={24} />
                 </box>
             </centerbox>
         </window>
