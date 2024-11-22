@@ -7,7 +7,7 @@ export default function DevicesIcon({ size }: { size: number }) {
         <eventbox
             setup={(self) => setHoverClassName("DevicesIcon", self)}
             onClick={(self, e) => {
-                FloatMenu({});
+                FloatMenu();
             }}
         >
             <box

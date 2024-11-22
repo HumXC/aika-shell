@@ -1,3 +1,4 @@
 import EventIcon from "./EventIcon";
 import Space from "./Space";
-export { EventIcon, Space };
+import RegularWindow from "./RegularWindow";
+export { EventIcon, Space, RegularWindow };
