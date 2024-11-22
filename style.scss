@@ -2,6 +2,7 @@
 @use "animations";
 $radius: "100px";
 $base_bg_color: rgba(104, 104, 104, 0.345);
+$selected_bg_color: rgba(135, 135, 135, 0.345);
 $bar_bg_color: linear-gradient(
         270deg,
         rgba(0, 0, 0, 0.8),
@@ -47,11 +48,16 @@ box.NetSpeed-hover {
     border-radius: #{$radius};
     background: $base_bg_color;
 }
-box.Logo {
-    background: red;
+eventbox.DevicesIcon {
+    background: $base_bg_color;
+    color: rgb(226, 226, 226);
     border-radius: #{$radius};
 }
-window.ScreenShot {
-    background: transparent;
-    color: transparent;
+eventbox.DevicesIcon-hover {
+    background: $selected_bg_color;
+    color: rgb(226, 226, 226);
+    border-radius: #{$radius};
+    .Icon-hover {
+        color: rgb(255, 255, 255);
+    }
 }

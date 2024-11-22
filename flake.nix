@@ -19,6 +19,7 @@
             io
             gjs
             tray
+            network
           ];
         };
       in
