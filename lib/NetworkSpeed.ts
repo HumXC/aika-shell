@@ -19,17 +19,28 @@ class NetworkSpeed extends GObject.Object {
     @property(String) declare currentIFace: string;
 
     private intervalId: GLib.Source;
-
-    // TODO
+    bytes: Map<
+        string,
+        {
+            download: number;
+            upload: number;
+        }
+    > = new Map();
     getBytes(iface: string): {
         download: string;
         upload: string;
     } {
-        let result = {
+        if (this.bytes.has(iface)) {
+            const bytes = this.bytes.get(iface)!;
+            return {
+                download: formatBytes(bytes.download),
+                upload: formatBytes(bytes.upload),
+            };
+        }
+        return {
             download: "0 KB",
             upload: "0 KB",
         };
-        return result;
     }
     prev_data: { kernel: any } | null = null;
     constructor() {
@@ -53,7 +64,10 @@ class NetworkSpeed extends GObject.Object {
         });
         menu.add(all);
         for (const iface of this.iface) {
-            const item = new Gtk.MenuItem({ label: iface });
+            const bs = this.getBytes(iface);
+            const item = new Gtk.MenuItem({
+                label: iface + " (" + bs.download + "/" + bs.upload + ")",
+            });
             item.connect("activate", () => {
                 this.currentIFace = iface;
             });
@@ -73,6 +87,9 @@ class NetworkSpeed extends GObject.Object {
         const ifaceList = [];
         for (const iface of Object.keys(current_data.kernel)) {
             if (iface === "lo") continue; // 忽略 lo 接口
+            if (!this.bytes.has(iface)) this.bytes.set(iface, { download: 0, upload: 0 });
+            this.bytes.get(iface)!.download = current_data.kernel[iface].rx_bytes;
+            this.bytes.get(iface)!.upload = current_data.kernel[iface].tx_bytes;
             ifaceList.push(iface);
             if (this.currentIFace === "All" || this.currentIFace === iface) {
                 const prev = this.prev_data.kernel[iface];
