@@ -4,7 +4,7 @@ $radius: "100px";
 $base_bg_color: rgba(104, 104, 104, 0.345);
 $selected_bg_color: rgba(135, 135, 135, 0.345);
 $bar_bg_color: linear-gradient(
-        270deg,
+        135deg,
         rgba(0, 0, 0, 0.8),
         rgba(8, 19, 22, 0.722),
         rgba(3, 13, 20, 0.8),
@@ -60,4 +60,9 @@ eventbox.DevicesIcon-hover {
     .Icon-hover {
         color: rgb(255, 255, 255);
     }
+}
+window.FloatingMenu {
+    border-radius: 20px;
+    background: $bar_bg_color;
+    @include animations.background-flow($size: 200%, $duration: 80s);
 }

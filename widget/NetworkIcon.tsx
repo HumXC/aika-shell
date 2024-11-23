@@ -26,7 +26,7 @@ export default function NetworkIcon({
             default:
                 return (
                     <EventIcon
-                        setup={(self) => setHoverClassName("Icon", self)}
+                        setup={(self) => setHoverClassName(self, "Icon")}
                         iconName={iconName()}
                         size={size}
                         padding={padding1}
@@ -35,7 +35,7 @@ export default function NetworkIcon({
         }
         return (
             <EventIcon
-                setup={(self) => setHoverClassName("Icon", self)}
+                setup={(self) => setHoverClassName(self, "Icon")}
                 iconName={iconName()}
                 size={size}
                 padding={padding2}

@@ -1,13 +1,14 @@
 import { setHoverClassName } from "../utils";
 import BrightnessIcon from "./BrightnessIcon";
 import NetworkIcon from "./NetworkIcon";
-import FloatMenu from "./FloatMenu";
+import FloatMenu from "./FloatingMenu";
 export default function DevicesIcon({ size }: { size: number }) {
     return (
         <eventbox
-            setup={(self) => setHoverClassName("DevicesIcon", self)}
+            setup={(self) => setHoverClassName(self, "DevicesIcon")}
             onClick={(self, e) => {
-                FloatMenu();
+                const w = FloatMenu(self);
+                print(w.get_allocation().x);
             }}
         >
             <box

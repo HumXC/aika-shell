@@ -6,10 +6,11 @@ class RegularWindow extends astalify(Gtk.Window) {
     static {
         GObject.registerClass({ GTypeName: "RegularWindow" }, this);
     }
+
     constructor(props?: RegularWindowProps, ...children: Array<BindableChild>) {
         super({ children, ...props } as any);
     }
 }
-export type RegularWindowProps = ConstructProps<RegularWindow, Astal>;
+export type RegularWindowProps = ConstructProps<RegularWindow, Gtk.Window.ConstructorProps> & {};
 
 export default RegularWindow;
