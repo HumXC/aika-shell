@@ -62,7 +62,6 @@ eventbox.DevicesIcon-hover {
     }
 }
 window.FloatingMenu {
-    border-radius: 20px;
     background: $bar_bg_color;
     @include animations.background-flow($size: 200%, $duration: 80s);
 }
