@@ -1,14 +1,14 @@
-import { setHoverClassName } from "../utils";
-import BrightnessIcon from "./BrightnessIcon";
-import NetworkIcon from "./NetworkIcon";
-import FloatMenu from "./FloatingMenu";
+import { setHoverClassName } from "../../utils";
+import BrightnessIcon from "../brightness-icon";
+import NetworkIcon from "../network-icon";
+import PopupWindow from "../popup-window";
 import { Gtk } from "astal/gtk3";
-export default function DevicesIcon({ size }: { size: number }) {
+export default function StatusIndicators({ size }: { size: number }) {
     return (
         <eventbox
-            setup={(self) => setHoverClassName(self, "DevicesIcon")}
+            setup={(self) => setHoverClassName(self, "StatusIndicators")}
             onClick={(self, e) => {
-                const w = FloatMenu(self);
+                const w = PopupWindow(self);
             }}
         >
             <box

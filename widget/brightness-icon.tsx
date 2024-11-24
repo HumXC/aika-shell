@@ -1,5 +1,5 @@
 import { bind } from "astal";
-import DDCBrightness from "../lib/DDCBrightness";
+import DDCBrightness from "../lib/ddc-brightness";
 import { EventIcon } from "./base";
 import { Astal } from "astal/gtk3";
 import { setHoverClassName } from "../utils";

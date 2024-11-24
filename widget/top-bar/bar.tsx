@@ -1,9 +1,9 @@
 import { App, Astal, Gtk, Gdk } from "astal/gtk3";
-import Tray from "../Tray";
-import Clock from "./Clock";
-import NetSpeed from "../NetSpeed";
+import Tray from "./tray";
+import Clock from "./clock";
+import NetSpeed from "./net-speed";
 import { EventIcon, Space } from "../base";
-import DevicesIcon from "../DevicesIcon";
+import StatusIndicators from "./status-indicators";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return (
         <window
@@ -26,7 +26,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                     <Clock fontSize={16} />
                 </box>
                 <box halign={Gtk.Align.END}>
-                    <DevicesIcon size={24} />
+                    <StatusIndicators size={24} />
                 </box>
             </centerbox>
         </window>

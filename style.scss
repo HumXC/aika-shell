@@ -48,12 +48,12 @@ box.NetSpeed-hover {
     border-radius: #{$radius};
     background: $base_bg_color;
 }
-eventbox.DevicesIcon {
+eventbox.StatusIndicators {
     background: $base_bg_color;
     color: rgb(226, 226, 226);
     border-radius: #{$radius};
 }
-eventbox.DevicesIcon-hover {
+eventbox.StatusIndicators-hover {
     background: $selected_bg_color;
     color: rgb(226, 226, 226);
     border-radius: #{$radius};

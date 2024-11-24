@@ -1,7 +1,7 @@
 import { Astal, Gdk, Gtk, Widget } from "astal/gtk3";
 import { RegularWindow } from "./base";
 
-export default function FloatMenu(trigger: Gtk.Widget) {
+export default function PopupWindow(trigger: Gtk.Widget) {
     return (
         <window
             setup={(self) => {
