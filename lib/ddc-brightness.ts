@@ -150,8 +150,8 @@ class DDCBrightness extends GObject.Object {
         this.#displayMaxBrightness = 100;
         this.iconName = get_icon(100);
         fetchLight(1).then(({ light, max }) => {
-            this.light = Math.floor((light / max) * 100);
             this.#displayMaxBrightness = max;
+            this.light = Math.floor((light / max) * 100);
             this.iconName = get_icon(this.light);
 
             this.connect("notify::light", async () => {

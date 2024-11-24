@@ -1,7 +1,7 @@
 import { App } from "astal/gtk3";
 import style from "./style.scss";
 import TopBar from "./widget/top-bar";
-import { Handle, Register } from "./RequestHandler";
+import { Handle, Register } from "./request-handler";
 import Screenshot from "./handler/Screenshot";
 Register("screenshot", Screenshot);
 App.start({

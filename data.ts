@@ -1,7 +1,9 @@
-const file = `${Utils.HOME}/.ags.json`;
+import { GLib, readFile, writeFile, writeFileAsync } from "astal";
+
+const file = `${GLib.get_user_data_dir()}/.ags.json`;
 function Parse() {
     try {
-        return JSON.parse(Utils.readFile(file));
+        return JSON.parse(readFile(file));
     } catch (e) {
         console.error(e);
         return {};
@@ -9,5 +11,5 @@ function Parse() {
 }
 export const Data: any = Parse();
 export function SaveData() {
-    Utils.writeFile(JSON.stringify(Data), file).catch((e) => console.error(e));
+    writeFileAsync(JSON.stringify(Data), file).catch((e) => console.error(e));
 }
