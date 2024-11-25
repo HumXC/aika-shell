@@ -2,6 +2,8 @@
 @use "animations";
 $radius: "100px";
 $base_bg_color: rgba(104, 104, 104, 0.345);
+$base_color: rgb(226, 226, 226);
+$selected_color: rgb(255, 255, 255);
 $selected_bg_color: rgba(135, 135, 135, 0.345);
 $bar_bg_color: linear-gradient(
         135deg,
@@ -16,6 +18,9 @@ $tray_item_hover_color: rgba(255, 255, 255, 0.269);
 label {
     color: #{public-colors.$theme_fg_color};
 }
+label.Clock {
+    color: $base_color;
+}
 window.Bar {
     background: transparent;
     color: transparent;
@@ -26,6 +31,12 @@ window.Bar {
         border-radius: #{$radius};
         margin: 8px 8px 0 8px;
         @include animations.background-flow($size: 200%, $duration: 120s);
+    }
+    .NotificationIcon {
+        color: $base_color;
+    }
+    .NotificationIcon-hover {
+        color: $selected_color;
     }
 }
 box.Tray {
@@ -40,7 +51,7 @@ box.Tray {
 box.NetSpeed {
     border-radius: #{$radius};
     > label {
-        color: rgb(207, 207, 207);
+        color: $base_color;
     }
     background: $base_bg_color;
 }
@@ -50,15 +61,15 @@ box.NetSpeed-hover {
 }
 eventbox.StatusIndicators {
     background: $base_bg_color;
-    color: rgb(226, 226, 226);
+    color: $base_color;
     border-radius: #{$radius};
 }
 eventbox.StatusIndicators-hover {
-    background: $selected_bg_color;
-    color: rgb(226, 226, 226);
+    background: $base_bg_color;
+    color: $base_color;
     border-radius: #{$radius};
     .Icon-hover {
-        color: rgb(255, 255, 255);
+        color: $selected_color;
     }
 }
 box.FloatingMenu {
@@ -76,8 +87,12 @@ box.Workspace {
         background: rgba(255, 255, 255, 0.157);
         border-radius: 50px;
     }
+    .Item-hover {
+        background: $selected_color;
+        border-radius: 50px;
+    }
     .Item-focused {
-        background: rgb(205, 205, 205);
+        background: $base_color;
         border-radius: 50px;
     }
 }

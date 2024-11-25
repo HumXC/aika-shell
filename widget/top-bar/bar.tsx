@@ -5,6 +5,7 @@ import NetSpeed from "./net-speed";
 import { EventIcon, Space } from "../base";
 import StatusIndicators from "./status-indicators";
 import Workspace from "./workspace";
+import NotificationsIcon from "../notifications-icon";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return (
         <window
@@ -31,6 +32,9 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                 </box>
                 <box halign={Gtk.Align.END}>
                     <StatusIndicators size={24} />
+                    <Space space={8} />
+                    <NotificationsIcon size={24} />
+                    <Space space={2} />
                 </box>
             </centerbox>
         </window>

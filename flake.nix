@@ -22,6 +22,8 @@
             network
             hyprland
             wireplumber
+            bluetooth
+            notifd
           ];
         };
       in

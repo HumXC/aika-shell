@@ -6,7 +6,7 @@ class EventIcon extends astalify(EventBox) {
     static {
         GObject.registerClass({ GTypeName: "EventIcon" }, this);
     }
-    constructor(props?: IcoProps, ...children: Array<BindableChild>) {
+    constructor(props?: EventIconProps, ...children: Array<BindableChild>) {
         super({ children, ...props } as any);
         let margin = props?.size! / 8;
         if (props?.padding! >= 0) margin = props?.padding!;
@@ -23,7 +23,7 @@ class EventIcon extends astalify(EventBox) {
         );
     }
 }
-export type IcoProps = EventBoxProps &
+export type EventIconProps = EventBoxProps &
     ConstructProps<EventIcon, Astal.EventBox.ConstructorProps> & {
         iconName: string | Binding<string>;
         size: number;
