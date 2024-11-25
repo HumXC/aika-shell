@@ -24,29 +24,47 @@ export default function PopupWindow({
         self.close();
         self.destroy();
     };
+    // FIXME: 缩放下，位置计算有问题
     const windowSetup = (self: Astal.Window) => {
         const scaleFactor = self.get_scale_factor();
+        const setScaleFactor = (location: Gdk.Rectangle) => {
+            location.x += margin * scaleFactor;
+            location.y += margin * scaleFactor;
+            location.height *= scaleFactor;
+            location.width *= scaleFactor;
+        };
         const triggerLocation = trigger.get_allocation();
-        triggerLocation.x += margin * scaleFactor;
-        triggerLocation.y += margin * scaleFactor;
-        triggerLocation.height *= scaleFactor;
-        triggerLocation.width *= scaleFactor;
+        setScaleFactor(triggerLocation);
         const widgetLocation = self.get_child()!.get_allocation();
-        widgetLocation.x += margin * scaleFactor;
-        widgetLocation.y += margin * scaleFactor;
-        widgetLocation.height *= scaleFactor;
-        widgetLocation.width *= scaleFactor;
+        setScaleFactor(widgetLocation);
         const windowWidth = self.get_screen().get_width() * scaleFactor;
         const windowHeight = self.get_screen().get_height() * scaleFactor;
-
+        const [_, triggerX, triggerY] = trigger.get_window()!.get_origin();
+        print(
+            "triggerLocation",
+            triggerLocation.x,
+            triggerLocation.y,
+            triggerLocation.width,
+            triggerLocation.height
+        );
+        print(
+            "widgetLocation",
+            widgetLocation.x,
+            widgetLocation.y,
+            widgetLocation.width,
+            widgetLocation.height
+        );
+        print("triggerX", triggerX, "triggerY", triggerY);
+        print("windowWidth", windowWidth, "windowHeight", windowHeight);
         let anchors: GtkLayerShell.Edge[] = [];
         let offset = 0;
         switch (position) {
             case "top":
                 anchors.push(GtkLayerShell.Edge.TOP);
                 anchors.push(GtkLayerShell.Edge.LEFT);
-                offset = triggerLocation.x - widgetLocation.width / 2 + triggerLocation.width / 2;
+                offset = triggerX - widgetLocation.width / 2 + triggerLocation.width / 2;
                 if (offset + widgetLocation.width > windowWidth) {
+                    print("offset overflow");
                     offset = windowWidth - widgetLocation.width;
                 }
                 break;
@@ -71,10 +89,10 @@ export default function PopupWindow({
             //     if (offset + widgetSize[1] > windowHeight) offset = windowHeight - widgetSize[1];
             //     break;
         }
-        print("offset", offset);
         GtkLayerShell.set_anchor(self, anchors[0], true);
         GtkLayerShell.set_anchor(self, anchors[1], true);
         GtkLayerShell.set_margin(self, anchors[2], offset);
+        print("offset", offset);
     };
 
     return (
