@@ -69,3 +69,15 @@ box.FloatingMenu {
 box.PopupWindow {
     margin: 8px;
 }
+box.Workspace {
+    background: $base_bg_color;
+    border-radius: #{$radius};
+    .Item {
+        background: rgba(255, 255, 255, 0.157);
+        border-radius: 50px;
+    }
+    .Item-focused {
+        background: rgb(205, 205, 205);
+        border-radius: 50px;
+    }
+}

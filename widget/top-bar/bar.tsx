@@ -4,6 +4,7 @@ import Clock from "./clock";
 import NetSpeed from "./net-speed";
 import { EventIcon, Space } from "../base";
 import StatusIndicators from "./status-indicators";
+import Workspace from "./workspace";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     return (
         <window
@@ -20,6 +21,8 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                     <EventIcon iconName="nix-snowflake-colours" size={24} />
                     <Space space={8} />
                     <Tray height={24} />
+                    <Space space={10} />
+                    <Workspace height={24} />
                     <Space space={10} />
                     <NetSpeed height={24} />
                 </box>

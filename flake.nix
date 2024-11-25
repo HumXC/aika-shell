@@ -20,6 +20,8 @@
             gjs
             tray
             network
+            hyprland
+            wireplumber
           ];
         };
       in

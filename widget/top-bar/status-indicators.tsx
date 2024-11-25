@@ -2,14 +2,15 @@ import GtkLayerShell from "gi://GtkLayerShell?version=0.1";
 import { setHoverClassName } from "../../utils";
 import BrightnessIcon from "../brightness-icon";
 import NetworkIcon from "../network-icon";
-import PopupWindow from "../popup-window";
+import PopupWindow from "../base/popup-window";
 import { App, Astal, Gtk } from "astal/gtk3";
 export default function StatusIndicators({ size }: { size: number }) {
     return (
         <eventbox
             setup={(self) => setHoverClassName(self, "StatusIndicators")}
             onClick={(self, e) => {
-                <PopupWindow trigger={self} position="top">
+                // TODO: marging 是 Bar 的Padding
+                <PopupWindow trigger={self} position="top" margin={8}>
                     <box widthRequest={200} heightRequest={200} className={"FloatingMenu"}></box>
                 </PopupWindow>;
             }}
