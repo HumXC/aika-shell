@@ -1,49 +1,93 @@
 import { Astal, ConstructProps, Gdk, Gtk, astalify } from "astal/gtk3";
+import Gtk30 from "gi://Gtk";
+import GtkLayerShell from "gi://GtkLayerShell?version=0.1";
+import { BindableChild } from "astal/gtk3/astalify";
+import { bind } from "astal";
 
-function getMonitorSize(widget: Gtk.Widget) {
-    const rect = new Gdk.Rectangle();
-    const screen = widget.get_screen();
-    const monitor = screen.get_monitor_geometry(screen.get_primary_monitor());
-    const scaleFactor = screen.get_monitor_scale_factor(screen.get_primary_monitor());
-    if (monitor?.width) rect.width = monitor.width * scaleFactor;
-    if (monitor?.height) rect.height = monitor.height * scaleFactor;
-    return rect;
-}
-function getRealLocation(widget: Gtk.Widget) {
-    let w = widget;
+export default function PopupWindow({
+    trigger,
+    position,
+    child,
+    closing,
+    ...children
+}: {
+    trigger: Gtk.Widget;
+    position: "top" | "bottom";
+    child?: BindableChild;
+    children?: Array<BindableChild>;
+    closing?: (self: Astal.Window) => boolean;
+}) {
+    const close = (self: Astal.Window) => {
+        if (closing && !closing(self)) return;
+        self.close();
+        self.destroy();
+    };
+    const windowSetup = (self: Astal.Window) => {
+        const triggerLocation = trigger.get_allocation();
+        const widgetLocation = self.get_child()!.get_allocation();
+        const windowWidth = self.get_screen().get_width();
+        const windowHeight = self.get_screen().get_height();
+        let anchors: GtkLayerShell.Edge[] = [];
+        let offset = 0;
+        switch (position) {
+            case "top":
+                anchors.push(GtkLayerShell.Edge.TOP);
+                anchors.push(GtkLayerShell.Edge.LEFT);
+                offset = triggerLocation.x - widgetLocation.width / 2 + triggerLocation.width / 2;
+                if (offset + widgetLocation.width > windowWidth)
+                    offset = windowWidth - widgetLocation.width;
+                break;
+            case "bottom":
+                anchors.push(GtkLayerShell.Edge.BOTTOM);
+                anchors.push(GtkLayerShell.Edge.LEFT);
+                offset = triggerLocation.x - widgetLocation.width / 2 + triggerLocation.width / 2;
+                if (offset + widgetLocation.width > windowWidth)
+                    offset = windowWidth - widgetLocation.width;
+                break;
+            // TODO： Test the other positions
+            // case "left":
+            //     anchors.push(GtkLayerShell.Edge.LEFT);
+            //     anchors.push(GtkLayerShell.Edge.TOP);
+            //     offset = triggerLocation.y - widgetSize[1] / 2 + triggerLocation.height / 2;
+            //     if (offset + widgetSize[1] > windowHeight) offset = windowHeight - widgetSize[1];
+            //     break;
+            // case "right":
+            //     anchors.push(GtkLayerShell.Edge.RIGHT);
+            //     anchors.push(GtkLayerShell.Edge.TOP);
+            //     offset = triggerLocation.y - widgetSize[1] / 2 + triggerLocation.height / 2;
+            //     if (offset + widgetSize[1] > windowHeight) offset = windowHeight - widgetSize[1];
+            //     break;
+        }
+        GtkLayerShell.set_anchor(self, anchors[0], true);
+        GtkLayerShell.set_anchor(self, anchors[1], true);
+        GtkLayerShell.set_margin(self, anchors[2], offset);
+    };
 
-    for (let i = 0; i < 10; i++) {
-        const al = w.get_allocation();
-        print(al.x, al.y, al.width, al.height);
-        if (w.get_toplevel) w = w.get_toplevel();
-        else break;
-    }
-}
-
-export default function PopupWindow(trigger: Gtk.Widget) {
-    const size = getMonitorSize(trigger);
-    getRealLocation(trigger);
     return (
         <window
-            decorated={false}
-            resizable={true}
-            title="PopupWindow"
-            anchor={
-                Astal.WindowAnchor.TOP |
-                Astal.WindowAnchor.LEFT |
-                Astal.WindowAnchor.RIGHT |
-                Astal.WindowAnchor.BOTTOM
-            }
-            className={"PopupWindow"}
+            title={"PopupWindow"}
+            setup={windowSetup}
+            layer={Astal.Layer.TOP}
+            keymode={Astal.Keymode.ON_DEMAND}
+            namespace={"popup-window"}
+            onKeyPressEvent={(self, e) => {
+                if (e.get_keyval()[1] === Gdk.KEY_Escape) {
+                    self.close();
+                    self.destroy();
+                }
+            }}
+            css={"background: transparent;"}
         >
-            <box
-                setup={(self) => {
-                    self.set_allocation(trigger.get_allocation());
+            <eventbox
+                onHoverLost={(self, e) => {
+                    close(self.parent as Astal.Window);
                 }}
-                widthRequest={200}
-                heightRequest={200}
-                className={"FloatingMenu"}
-            ></box>
+            >
+                <box className={"PopupWindow"}>
+                    {child}
+                    {children.children}
+                </box>
+            </eventbox>
         </window>
     );
 }
