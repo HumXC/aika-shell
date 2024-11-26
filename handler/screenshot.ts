@@ -1,4 +1,5 @@
 import { exec } from "astal";
+import { slurp } from "../utils";
 
 export default function Handler(request: string) {
     const req = request.split(" ").filter((s) => s.length > 0);
@@ -20,13 +21,11 @@ export default function Handler(request: string) {
         break;
     }
 
-    let region = "";
-    try {
-        region = exec('slurp -b "#0000008a" -c "#ffffffe8" -d');
-    } catch (error) {}
-    if (region.length === 0) {
-        return "canceled";
+    const [region, err] = slurp();
+    if (err) {
+        return "Failed to get screen region: " + err;
     }
+
     try {
         exec(["bash", "-c", `grim -g "${region}" ${args.join(" ")} ${cmd}`]);
     } catch (error) {
