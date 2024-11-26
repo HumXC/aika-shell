@@ -1,4 +1,4 @@
-import { exec, execAsync, GObject, property, register } from "astal";
+import { exec, execAsync, GObject, property, register, signal } from "astal";
 
 const icons = {
     80: "high",
@@ -139,17 +139,24 @@ async function putLight(displayID: number, light: number) {
         )
     );
 }
+const created: Map<number, DDCBrightness> = new Map();
 @register()
 class DDCBrightness extends GObject.Object {
     @property(Number) declare light: number;
     @property(String) declare iconName: string;
+    @signal(Number) declare brightnessChanged: (brightness: number) => void;
     #displayMaxBrightness = 100;
     #lock = false;
-    constructor() {
+    #monitorID: number;
+    get monitorID() {
+        return this.#monitorID;
+    }
+    constructor(monitor: number) {
         super();
+        this.#monitorID = monitor;
         this.#displayMaxBrightness = 100;
         this.iconName = get_icon(100);
-        fetchLight(1).then(({ light, max }) => {
+        fetchLight(monitor).then(({ light, max }) => {
             this.#displayMaxBrightness = max;
             this.light = Math.floor((light / max) * 100);
             this.iconName = get_icon(this.light);
@@ -169,11 +176,24 @@ class DDCBrightness extends GObject.Object {
                 for (let light = -1; light != this.light; ) {
                     light = this.light;
                     const val = Math.floor((light / 100) * this.#displayMaxBrightness);
-                    await putLight(1, val);
+                    await putLight(monitor, val);
+                    this.brightnessChanged(val);
                 }
                 this.#lock = false;
             });
         });
     }
 }
-export default DDCBrightness;
+function get_monitor(monitorID: number): DDCBrightness {
+    if (created.has(monitorID)) {
+        return created.get(monitorID)!;
+    }
+    const monitor = new DDCBrightness(monitorID);
+    created.set(monitorID, monitor);
+    return monitor;
+}
+
+export default {
+    get_monitor,
+    DDCBrightness,
+};

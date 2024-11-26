@@ -2,11 +2,15 @@ import { bind, Variable } from "astal";
 import { setHoverClassName } from "../utils";
 import { EventIcon } from "./base";
 import Notifd from "gi://AstalNotifd";
-import { Astal, Gdk, Gtk } from "astal/gtk3";
-import { EventIconProps } from "./base/event-icon";
-
+import { Gdk, Gtk } from "astal/gtk3";
+import Config from "../config";
+class Cfg {
+    isDontDisturb: boolean = false;
+}
 export default function NotificationsIcon({ size }: { size: number }) {
     const notifd = Notifd.get_default();
+    const config = Config.Get(Cfg, "notifications-icon");
+
     const menu = new Gtk.Menu();
     const menuDontDisturb = new Gtk.MenuItem({ label: "Don't disturb" });
     const menuDoDisturb = new Gtk.MenuItem({ label: "Do disturb" });
@@ -50,7 +54,17 @@ export default function NotificationsIcon({ size }: { size: number }) {
                 iconName.set("notifications-symbolic");
         }
     };
-
+    notifd.dontDisturb = config.isDontDisturb;
+    const connect: number[] = [];
+    connect.push(notifd.connect("notify::notifications", () => setIcon()));
+    connect.push(
+        notifd.connect("notify::dont-disturb", () => {
+            config.isDontDisturb = notifd.dontDisturb;
+            Config.Save();
+            setIcon();
+        })
+    );
+    setIcon();
     return (
         <EventIcon
             onButtonPressEvent={(self, e) => {
@@ -80,12 +94,11 @@ export default function NotificationsIcon({ size }: { size: number }) {
                     }
                 }
             }}
-            onDestroy={() => menu.destroy()}
-            setup={(self) => {
-                setHoverClassName(self, "NotificationIcon");
-                self.hook(bind(notifd, "notifications"), (self, _) => setIcon());
-                self.hook(bind(notifd, "dontDisturb"), (self, _) => setIcon());
+            onDestroy={() => {
+                menu.destroy();
+                connect.forEach((id) => notifd.disconnect(id));
             }}
+            setup={(self) => setHoverClassName(self, "NotificationIcon")}
             iconName={iconName()}
             size={size}
             className={"NotificationIcon"}

@@ -7,14 +7,12 @@ import { bind } from "astal";
 export default function PopupWindow({
     trigger,
     position,
-    margin,
     child,
     closing,
     ...children
 }: {
     trigger: Gtk.Widget;
     position: "top" | "bottom";
-    margin: number;
     child?: BindableChild;
     children?: Array<BindableChild>;
     closing?: (self: Astal.Window) => boolean;
@@ -27,9 +25,10 @@ export default function PopupWindow({
     // FIXME: 缩放下，位置计算有问题
     const windowSetup = (self: Astal.Window) => {
         const scaleFactor = self.get_scale_factor();
+        print(scaleFactor);
         const setScaleFactor = (location: Gdk.Rectangle) => {
-            location.x += margin * scaleFactor;
-            location.y += margin * scaleFactor;
+            location.x += 0 * scaleFactor;
+            location.y += 0 * scaleFactor;
             location.height *= scaleFactor;
             location.width *= scaleFactor;
         };

@@ -1,23 +1,8 @@
 import { exec } from "astal";
 import { GObject, register, property, GLib, signal } from "astal/gobject";
 import { Gtk } from "astal/gtk3";
-function formatBytes(bytes: number): string {
-    function formatValue(value: number): string {
-        // 判断是否需要保留小数位
-        return value % 1 === 0 ? `${value}` : `${value.toFixed(2)}`;
-    }
+import { formatBytes } from "../utils";
 
-    if (bytes >= 800 * 1024 * 1024) {
-        // 超过 800 MB，显示为 GB
-        return `${formatValue(bytes / 1e9)} GB`;
-    } else if (bytes >= 800 * 1024) {
-        // 超过 800 KB，但未达到 800 MB，显示为 MB
-        return `${formatValue(bytes / 1e6)} MB`;
-    } else {
-        // 小于 800 KB，显示为 KB
-        return `${formatValue(bytes / 1024)} KB`;
-    }
-}
 @register()
 class NetworkSpeed extends GObject.Object {
     @property(Object) declare speed: {
@@ -28,7 +13,7 @@ class NetworkSpeed extends GObject.Object {
     @signal(Object) declare ifaceUpdate: (iface: string[]) => void;
     @property(String) declare currentIFace: string;
 
-    private intervalId: GLib.Source;
+    private intervalId: GLib.Source | null = null;
     bytes: Map<
         string,
         {
@@ -60,17 +45,19 @@ class NetworkSpeed extends GObject.Object {
             upload: "0 KB/s",
         };
         this.iface = [];
-        this.currentIFace = "All";
-        this.intervalId = setInterval(() => this.interval(), 1000);
+        this.currentIFace = "all";
+    }
+    start() {
+        if (!this.intervalId) this.intervalId = setInterval(() => this.interval(), 1000);
     }
     destroy(): void {
-        clearInterval(this.intervalId);
+        if (this.intervalId) clearInterval(this.intervalId);
     }
     createMenu() {
         const menu = new Gtk.Menu();
         const all = new Gtk.MenuItem({ label: "All Interfaces" });
         all.connect("activate", () => {
-            this.currentIFace = "All";
+            this.currentIFace = "all";
         });
         menu.add(all);
         for (const iface of this.iface) {
@@ -101,7 +88,7 @@ class NetworkSpeed extends GObject.Object {
             this.bytes.get(iface)!.download = current_data.kernel[iface].rx_bytes;
             this.bytes.get(iface)!.upload = current_data.kernel[iface].tx_bytes;
             ifaceList.push(iface);
-            if (this.currentIFace === "All" || this.currentIFace === iface) {
+            if (this.currentIFace === "all" || this.currentIFace === iface) {
                 const prev = this.prev_data.kernel[iface];
                 const current = current_data.kernel[iface];
                 if (!prev || !current) continue;
@@ -129,5 +116,13 @@ class NetworkSpeed extends GObject.Object {
         this.prev_data = current_data;
     }
 }
+const defaultNetworkSpeed = new NetworkSpeed();
 
-export default NetworkSpeed;
+function get_default(): NetworkSpeed {
+    defaultNetworkSpeed.start();
+    return defaultNetworkSpeed;
+}
+export default {
+    get_default,
+    NetworkSpeed,
+};

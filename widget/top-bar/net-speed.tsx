@@ -2,14 +2,25 @@ import { bind, Variable } from "astal";
 import NetworkSpeed from "../../lib/network-speed";
 import { Space } from "../base";
 import { Astal, Gdk, Gtk } from "astal/gtk3";
+import Config from "../../config";
 
+class Cfg {
+    interface: string = "all";
+}
 export default function NetSpeed({ height }: { height: number }) {
-    const networkSpeed = new NetworkSpeed();
+    const networkSpeed = NetworkSpeed.get_default();
     const className = Variable("NetSpeed");
     const fontSize = height - height / 2.8;
     let menu: Gtk.Menu | null = null;
+    const config = Config.Get(Cfg, "net-speed");
+    networkSpeed.currentIFace = config.interface;
+    const connect = networkSpeed.connect("notify::current-iface", () => {
+        config.interface = networkSpeed.currentIFace;
+        Config.Save();
+    });
     return (
         <eventbox
+            onDestroy={() => networkSpeed.disconnect(connect)}
             onHover={() => className.set("NetSpeed-hover")}
             onHoverLost={() => className.set("NetSpeed")}
             setup={(self) => {
@@ -18,7 +29,7 @@ export default function NetSpeed({ height }: { height: number }) {
                     menu = networkSpeed.createMenu();
                 });
             }}
-            tooltipText={bind(networkSpeed, "currentIFace").as((iface) => iface)}
+            tooltipText={bind(networkSpeed, "currentIFace")}
             onClickRelease={(self, e) => {
                 if (e.button === Astal.MouseButton.SECONDARY) {
                     let location = self.get_allocation();

@@ -10,8 +10,7 @@ export default function StatusIndicators({ size }: { size: number }) {
         <eventbox
             setup={(self) => setHoverClassName(self, "StatusIndicators")}
             onClick={(self, e) => {
-                // TODO: marging 是 Bar 的Padding
-                <PopupWindow trigger={self} position="top" margin={8}>
+                <PopupWindow trigger={self} position="top">
                     <box widthRequest={200} heightRequest={200} className={"FloatingMenu"}></box>
                 </PopupWindow>;
             }}

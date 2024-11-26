@@ -11,9 +11,8 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        agsPkgs = inputs.ags.packages.${pkgs.system};
-        ags = inputs.ags.packages.${system}.default.override {
-          extraPackages = with agsPkgs;  [
+        extraPackages = with inputs.ags.packages.${pkgs.system};
+          [
             astal3
             astal4
             io
@@ -25,9 +24,18 @@
             bluetooth
             notifd
           ];
+        ags = inputs.ags.packages.${system}.default.override {
+          extraPackages = extraPackages;
         };
       in
       {
+        packages.${system}.default = inputs.ags.lib.bundle {
+          inherit pkgs;
+          src = ./.;
+          name = "my-shell"; # name of executable
+          entry = "app.ts";
+          extraPackages = extraPackages ++ [ pkgs.gjs ];
+        };
         devShells.default = pkgs.mkShell {
           buildInputs = [
             ags
