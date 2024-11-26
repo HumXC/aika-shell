@@ -15,7 +15,6 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
             anchor={Astal.WindowAnchor.TOP | Astal.WindowAnchor.LEFT | Astal.WindowAnchor.RIGHT}
             application={App}
             namespace={"top-bar"}
-            keymode={Astal.Keymode.ON_DEMAND}
         >
             <centerbox heightRequest={1}>
                 <box halign={Gtk.Align.START}>

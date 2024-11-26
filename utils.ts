@@ -1,5 +1,6 @@
+import { exec } from "astal";
 import { EventBox } from "astal/gtk3/widget";
-
+import Config from "./config";
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -46,4 +47,65 @@ function formatDuration(seconds: number) {
     }
 }
 
-export { sleep, setHoverClassName, formatBytes, formatDuration };
+// -d           Display dimensions of selection.
+// -b #rrggbbaa Set background color.
+// -c #rrggbbaa Set border color.
+// -s #rrggbbaa Set selection color.
+// -B #rrggbbaa Set option box color.
+// -F s         Set the font family for the dimensions.
+// -w n         Set border weight.
+// -f s         Set output format.
+// -o           Select a display output.
+// -p           Select a single point.
+// -r           Restrict selection to predefined boxes.
+// -a w:h       Force aspect ratio.
+class SlurpConfig {
+    dimensions: boolean = false;
+    backgroundColor: string = "#0000005a";
+    borderColor: string = "#ffffffe8";
+    selectionColor: string = "";
+    optionBoxColor: string = "";
+    fontFamily: string = "";
+    borderWeight: number = 2;
+}
+const slurpConfig = Config.Get(SlurpConfig, "slurp");
+function slurp(
+    args?: Partial<{
+        dimensions: boolean;
+        backgroundColor: string;
+        borderColor: string;
+        selectionColor: string;
+        optionBoxColor: string;
+        fontFamily: string;
+        borderWeight: number;
+        outputFormat: string;
+        output: boolean;
+        point: boolean;
+        restrict: boolean;
+        aspectRatio: string;
+    }>
+): [string, Error | null] {
+    const cmd = ["slurp"];
+    const addCmd = (option: string, arg: string | undefined, cfg: string) => {
+        if (arg) cmd.push(`-${option}`, `${arg}`);
+        else if (cfg !== "") cmd.push(`-${option}`, `${cfg}`);
+    };
+    if (args?.dimensions === true || (!args?.dimensions && slurpConfig.dimensions)) cmd.push("-d");
+    addCmd("b", args?.backgroundColor, slurpConfig.backgroundColor);
+    addCmd("c", args?.borderColor, slurpConfig.borderColor);
+    addCmd("s", args?.selectionColor, slurpConfig.selectionColor);
+    addCmd("B", args?.optionBoxColor, slurpConfig.optionBoxColor);
+    addCmd("F", args?.fontFamily, slurpConfig.fontFamily);
+    addCmd("w", args?.borderWeight?.toString(), slurpConfig.borderWeight.toString());
+    if (args?.outputFormat) cmd.push("-f", `${args.outputFormat}`);
+    if (args?.output === true) cmd.push("-o");
+    if (args?.point === true) cmd.push("-p");
+    if (args?.restrict === true) cmd.push("-r");
+    if (args?.aspectRatio) cmd.push("-a", `${args.aspectRatio}`);
+    try {
+        return [exec(cmd), null];
+    } catch (e) {
+        return ["", e as Error];
+    }
+}
+export { sleep, setHoverClassName, formatBytes, formatDuration, slurp, SlurpConfig };
