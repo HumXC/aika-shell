@@ -3,13 +3,13 @@ import { setHoverClassName } from "../utils";
 import { EventIcon } from "./base";
 import Notifd from "gi://AstalNotifd";
 import { Gdk, Gtk } from "astal/gtk3";
-import Config from "../config";
+import { GetConfig, SaveConfig } from "../configs";
 class Cfg {
     isDontDisturb: boolean = false;
 }
 export default function NotificationsIcon({ size }: { size: number }) {
     const notifd = Notifd.get_default();
-    const config = Config.Get(Cfg, "notifications-icon");
+    const config = GetConfig(Cfg, "notifications-icon");
 
     const menu = new Gtk.Menu();
     const menuDontDisturb = new Gtk.MenuItem({ label: "Don't disturb" });
@@ -60,7 +60,7 @@ export default function NotificationsIcon({ size }: { size: number }) {
     connect.push(
         notifd.connect("notify::dont-disturb", () => {
             config.isDontDisturb = notifd.dontDisturb;
-            Config.Save();
+            SaveConfig();
             setIcon();
         })
     );

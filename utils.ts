@@ -1,6 +1,6 @@
 import { exec } from "astal";
 import { EventBox } from "astal/gtk3/widget";
-import Config from "./config";
+import { Slurp as slurpConfig } from "./configs";
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -59,16 +59,7 @@ function formatDuration(seconds: number) {
 // -p           Select a single point.
 // -r           Restrict selection to predefined boxes.
 // -a w:h       Force aspect ratio.
-class SlurpConfig {
-    dimensions: boolean = false;
-    backgroundColor: string = "#0000005a";
-    borderColor: string = "#ffffffe8";
-    selectionColor: string = "";
-    optionBoxColor: string = "";
-    fontFamily: string = "";
-    borderWeight: number = 2;
-}
-const slurpConfig = Config.Get(SlurpConfig, "slurp");
+
 function slurp(
     args?: Partial<{
         dimensions: boolean;
@@ -108,4 +99,4 @@ function slurp(
         return ["", e as Error];
     }
 }
-export { sleep, setHoverClassName, formatBytes, formatDuration, slurp, SlurpConfig };
+export { sleep, setHoverClassName, formatBytes, formatDuration, slurp };

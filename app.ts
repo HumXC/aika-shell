@@ -5,7 +5,7 @@ import TopBar from "./widget/top-bar";
 import { Handle, Register } from "./request-handler";
 import Screenshot from "./handler/screenshot";
 import Recorder from "./handler/wf-recorder";
-import _ from "./config";
+import _ from "./configs";
 Register("screenshot", Screenshot);
 Register("recorder", Recorder);
 App.start({
