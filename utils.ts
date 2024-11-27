@@ -44,7 +44,7 @@ function formatDuration(seconds: number) {
     } else if (minutes > 0) {
         return `${minutes}m ${seconds.toFixed(0)}s`;
     } else {
-        return `${seconds.toFixed(2)}s`;
+        return `${seconds.toFixed(0)}s`;
     }
 }
 function notifySend(

@@ -7,7 +7,7 @@ import ScreenMask from "../widget/base/screen-region-mask";
 
 @register()
 class WFRecorder extends GObject.Object {
-    @property(Boolean) declare recording: boolean;
+    @property(Boolean) declare isRecording: boolean;
     @property(Boolean) declare useMask: boolean;
     @property(Number) declare startTime: number;
     @signal(String, Number, Object) declare finished: (
@@ -24,7 +24,7 @@ class WFRecorder extends GObject.Object {
     get region(): Gdk.Rectangle | null {
         return this._region;
     }
-    duration: number = 0;
+    @property(Number) declare duration: number;
     private proc: Gio.Subprocess | null = null;
     private mask: Gtk.Widget | null = null;
     constructor() {
@@ -67,12 +67,12 @@ class WFRecorder extends GObject.Object {
 
         this.startTime = GLib.get_real_time();
         this.started(this._file, this.startTime);
-        this.recording = true;
+        this.isRecording = true;
         if (this.useMask && this._region) {
             this.mask = ScreenMask(this._region, c.borderWeight, c.borderStyle, c.borderColor);
         }
         GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, (): boolean => {
-            if (!this.recording) return false;
+            if (!this.isRecording) return false;
             this.duration = (GLib.get_real_time() - this.startTime) / 1000000;
             return true;
         });
@@ -92,7 +92,7 @@ class WFRecorder extends GObject.Object {
         this.mask = null;
         this.proc?.send_signal(15);
         this.proc = null;
-        this.recording = false;
+        this.isRecording = false;
         this.finished(this._file, this.duration, error);
     }
     stop() {

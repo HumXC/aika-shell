@@ -96,3 +96,7 @@ box.Workspace {
         border-radius: 50px;
     }
 }
+box.RecorderIcon {
+    background: $base_bg_color;
+    border-radius: #{$radius};
+}

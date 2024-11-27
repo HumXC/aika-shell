@@ -33,6 +33,6 @@ function StopRecording() {
 }
 export default function Handler(_: string) {
     const wf = WFRecorder.get_default();
-    if (wf.recording) return StopRecording();
+    if (wf.isRecording) return StopRecording();
     return StartRecording();
 }
