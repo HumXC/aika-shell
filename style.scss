@@ -29,8 +29,6 @@ window.Bar {
         padding: 6px 8px;
         background: $bar_bg_color;
         border-radius: #{$radius};
-        margin: 8px 8px 0 8px;
-        @include animations.background-flow($size: 200%, $duration: 120s);
     }
     .NotificationIcon {
         color: $base_color;
@@ -75,7 +73,6 @@ eventbox.StatusIndicators-hover {
 box.FloatingMenu {
     background: $bar_bg_color;
     border-radius: 10px;
-    @include animations.background-flow($size: 200%, $duration: 80s);
 }
 box.PopupWindow {
     margin: 8px;
@@ -99,4 +96,7 @@ box.Workspace {
 box.RecorderIcon {
     background: $base_bg_color;
     border-radius: #{$radius};
+}
+window.clipboard {
+    background: rgb(71, 71, 71);
 }

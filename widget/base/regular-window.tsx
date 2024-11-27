@@ -10,9 +10,6 @@ class RegularWindow extends astalify(Gtk.Window) {
 
     constructor(props?: RegularWindowProps, ...children: Array<BindableChild>) {
         super({ children, ...props } as any);
-        if (props?.setup) {
-            props.setup(this);
-        }
     }
 }
 export type RegularWindowProps = ConstructProps<RegularWindow, Gtk.Window.ConstructorProps> & {

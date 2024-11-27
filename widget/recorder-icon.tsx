@@ -69,6 +69,7 @@ export const RecorderIcon = ({ height }: { height: number }) => {
                     font-size: ${height / 2}px;
                     padding: 1px ${outerPadding + 4}px 0 0;
                 `}
+                label={"··"}
                 setup={(self) => {
                     self.hook(bind(wf, "duration"), (self, duration) => {
                         const txt = formatDuration(duration);

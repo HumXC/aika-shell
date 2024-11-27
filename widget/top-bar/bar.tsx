@@ -7,10 +7,23 @@ import StatusIndicators from "./status-indicators";
 import Workspace from "./workspace";
 import NotificationsIcon from "../notifications-icon";
 import { RecorderIcon } from "../recorder-icon";
-import wfRecorder from "../../lib/wf-recorder";
-import { bind } from "astal";
+import { exec } from "astal";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
-    const wf = wfRecorder.get_default();
+    const gapsOption: {
+        option: string;
+        custom: string;
+        set: boolean;
+    } = JSON.parse(exec(["hyprctl", "-j", "getoption", "general:gaps_out"]));
+    let gapTop = 0;
+    let gapRight = 0;
+    let gapLeft = 0;
+
+    if (gapsOption.set) {
+        const gaps = gapsOption.custom.split(" ").map(Number);
+        gapTop = gaps[0];
+        gapRight = gaps[1];
+        gapLeft = gaps[3];
+    }
     return (
         <window
             className="Bar"
@@ -20,7 +33,11 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
             application={App}
             namespace={"top-bar"}
         >
-            <centerbox>
+            <centerbox
+                css={`
+                    margin: ${gapTop}px ${gapRight}px 0 ${gapLeft}px;
+                `}
+            >
                 <overlay
                     overlay={<box halign={Gtk.Align.END}>{/* 时钟左侧区域 */}</box>}
                     hexpand={true}
