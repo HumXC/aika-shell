@@ -10,6 +10,9 @@ export class WFRecorder {
     codec: string = "";
     codecParam: string = "";
     audioCodec: string = "";
+    borderWeight: number = 2;
+    borderStyle: string = "solid";
+    borderColor: string = "white";
 }
 
 export class Slurp {

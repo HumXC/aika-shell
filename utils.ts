@@ -1,6 +1,7 @@
-import { exec } from "astal";
+import { exec, Gio, GLib } from "astal";
 import { EventBox } from "astal/gtk3/widget";
 import { Slurp as slurpConfig } from "./configs";
+import { Gdk } from "astal/gtk3";
 function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -46,20 +47,45 @@ function formatDuration(seconds: number) {
         return `${seconds.toFixed(2)}s`;
     }
 }
-
-// -d           Display dimensions of selection.
-// -b #rrggbbaa Set background color.
-// -c #rrggbbaa Set border color.
-// -s #rrggbbaa Set selection color.
-// -B #rrggbbaa Set option box color.
-// -F s         Set the font family for the dimensions.
-// -w n         Set border weight.
-// -f s         Set output format.
-// -o           Select a display output.
-// -p           Select a single point.
-// -r           Restrict selection to predefined boxes.
-// -a w:h       Force aspect ratio.
-
+function notifySend(
+    summary: string,
+    body: string,
+    options?: Partial<{
+        urgency: "low" | "normal" | "critical";
+        expireTime: number;
+        appName: string;
+        category: string;
+        transient: boolean;
+        hint: string;
+        replaceId: string;
+        wait: boolean;
+        action: string;
+        icon: string;
+    }>
+): Error | null {
+    const cmd = ["slurp"];
+    const addCmd = (option: string, arg: string | undefined, cfg: string) => {
+        if (arg) cmd.push(`-${option}`, `${arg}`);
+        else if (cfg !== "") cmd.push(`-${option}`, `${cfg}`);
+    };
+    addCmd("u", options?.urgency, "normal");
+    addCmd("t", options?.expireTime?.toString(), "");
+    addCmd("a", options?.appName, "");
+    addCmd("c", options?.category, "");
+    if (options?.transient === true) cmd.push("-e");
+    addCmd("h", options?.hint, "");
+    addCmd("r", options?.replaceId, "");
+    if (options?.wait === true) cmd.push("-w");
+    addCmd("A", options?.action, "");
+    if (options?.icon) cmd.push("-i", options.icon);
+    cmd.push(summary, body);
+    try {
+        exec(cmd);
+        return null;
+    } catch (e) {
+        return e as Error;
+    }
+}
 function slurp(
     args?: Partial<{
         dimensions: boolean;
@@ -99,4 +125,60 @@ function slurp(
         return ["", e as Error];
     }
 }
-export { sleep, setHoverClassName, formatBytes, formatDuration, slurp };
+function slurpRect(
+    args?: Partial<{
+        dimensions: boolean;
+        backgroundColor: string;
+        borderColor: string;
+        selectionColor: string;
+        optionBoxColor: string;
+        fontFamily: string;
+        borderWeight: number;
+        output: boolean;
+        restrict: boolean;
+        aspectRatio: string;
+    }>
+): [Gdk.Rectangle, Error | null] {
+    const [output, error] = slurp(args);
+    if (error) return [new Gdk.Rectangle(), error];
+    const region = output.split(" ");
+    const [x, y] = region[0].split(",").map(Number);
+    const [width, height] = region[1].split("x").map(Number);
+    return [new Gdk.Rectangle({ x, y, width, height }), null];
+}
+function rectToString(rect: Gdk.Rectangle): string {
+    return `${rect.x},${rect.y} ${rect.width}x${rect.height}`;
+}
+
+// TODO: 测试 Gio.InputStream | GLib.Bytes
+function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string | null = null) {
+    const cmd = ["wl-copy"];
+    if (mime) cmd.push("-t", mime);
+    if (typeof body === "string") cmd.push(body);
+
+    const proc = Gio.Subprocess.new(cmd, Gio.SubprocessFlags.STDOUT_PIPE);
+
+    if (typeof body === "string") proc.communicate(null, null);
+    else if (body instanceof GLib.Bytes) proc.communicate(body, null);
+    else {
+        const stdin = proc.get_stdin_pipe()!;
+        let length = 0.1; // 用于进入循环
+        while (length > 0) {
+            const [l, b] = body.read(null);
+            length = l;
+            if (l > 0) stdin.write(b, null);
+        }
+        stdin.close();
+    }
+}
+export {
+    sleep,
+    setHoverClassName,
+    formatBytes,
+    formatDuration,
+    slurp,
+    slurpRect,
+    notifySend,
+    rectToString,
+    wlCopy,
+};
