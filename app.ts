@@ -7,11 +7,13 @@ import Screenshot from "./handler/screenshot";
 import Recorder from "./handler/wf-recorder";
 import Clipboard from "./handler/clipboard";
 import Powermenu from "./handler/powermenu";
+import ScreenLock from "./handler/lockscreen";
 import _ from "./configs";
 Register("screenshot", Screenshot);
 Register("recorder", Recorder);
 Register("clipboard", Clipboard);
 Register("powermenu", Powermenu);
+Register("lockscreen", ScreenLock);
 App.start({
     requestHandler: (request, res) => Handle(request, res),
     css: style,

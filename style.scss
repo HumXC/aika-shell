@@ -116,3 +116,9 @@ window.Powermenu {
         color: rgb(205, 205, 205);
     }
 }
+box.LockScreen {
+    background: $base_bg_color;
+    entry {
+        background: white;
+    }
+}

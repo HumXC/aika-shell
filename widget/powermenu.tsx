@@ -26,7 +26,7 @@ class PowermenuConfig extends ArrayConfig<{
         {
             label: "Lock",
             iconName: "system-lock-screen-symbolic",
-            action: "ags request screenlock",
+            action: "ags request lockscreen",
             default: true,
         },
         {
