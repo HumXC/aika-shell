@@ -55,7 +55,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
 
                 <box halign={Gtk.Align.CENTER}>
                     <Space space={8} />
-                    <Clock fontSize={16} />
+                    <Clock fontSize={16} useTooltip={true} />
                     <Space space={8} />
                 </box>
                 <overlay

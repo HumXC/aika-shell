@@ -100,3 +100,19 @@ box.RecorderIcon {
 window.clipboard {
     background: rgb(71, 71, 71);
 }
+window.Powermenu {
+    label {
+        color: $base_color;
+    }
+    background: rgb(0, 0, 0);
+    .PowermenuIcon {
+        border-radius: 50%;
+        background: rgb(19, 19, 19);
+        color: rgb(128, 128, 128);
+    }
+    .PowermenuIcon-hover {
+        border-radius: 50%;
+        background: rgb(54, 54, 54);
+        color: rgb(205, 205, 205);
+    }
+}

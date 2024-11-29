@@ -6,10 +6,12 @@ import { Handle, Register } from "./request-handler";
 import Screenshot from "./handler/screenshot";
 import Recorder from "./handler/wf-recorder";
 import Clipboard from "./handler/clipboard";
+import Powermenu from "./handler/powermenu";
 import _ from "./configs";
 Register("screenshot", Screenshot);
 Register("recorder", Recorder);
 Register("clipboard", Clipboard);
+Register("powermenu", Powermenu);
 App.start({
     requestHandler: (request, res) => Handle(request, res),
     css: style,

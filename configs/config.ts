@@ -1,6 +1,6 @@
 import { GLib, readFile, writeFileAsync } from "astal";
-
 const file = `${GLib.get_user_config_dir()}/ags/config.json`;
+const ready = new Map<string, null>();
 function Load() {
     try {
         return JSON.parse(readFile(file));
@@ -15,8 +15,17 @@ function Save() {
 }
 function Get<T>(type: { new (): T }, key: string): T {
     if (!Data.hasOwnProperty(key)) {
-        Data[key] = new type();
+        const newValue = new type() as any;
+        if ("default" in newValue) {
+            Data[key] = newValue.default;
+        } else {
+            Data[key] = newValue;
+        }
         Save();
+    }
+
+    if (ready.has(key)) {
+        return Data[key];
     }
     const newValue = new type() as any;
     if ("fromJSON" in newValue && typeof newValue.fromJSON === "function") {
@@ -25,13 +34,14 @@ function Get<T>(type: { new (): T }, key: string): T {
     } else {
         Data[key] = { ...newValue, ...Data[key] };
     }
+    ready.set(key, null);
     return Data[key];
 }
 function GetAny(key: string): any {
     class AnyClass {}
     return Get(AnyClass, key);
 }
-class MapConfig<T> extends Map<string, T> {
+export class MapConfig<T> extends Map<string, T> {
     toJSON() {
         let obj: any = {};
         for (let [key, value] of this) {
@@ -45,10 +55,20 @@ class MapConfig<T> extends Map<string, T> {
         }
     }
 }
+export class ArrayConfig<T> extends Array<T> {
+    fromJSON(arr: any) {
+        for (let item of arr) {
+            this.push(item);
+        }
+    }
+    default: Array<T> = [];
+}
+
 export default {
     Data,
     Save,
     Get,
     GetAny,
     MapConfig,
+    ArrayConfig,
 };
