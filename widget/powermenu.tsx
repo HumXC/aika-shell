@@ -77,6 +77,7 @@ export default function Powermenu() {
                     self.close();
                 }
                 if (e.get_keyval()[1] == Gdk.KEY_Return) {
+                    if (select.get() === -1) return;
                     const item = cfg[select.get()];
                     execAsync(["bash", "-c", item.action]);
                     self.close();
@@ -109,7 +110,7 @@ export default function Powermenu() {
             }}
         >
             <centerbox vertical={true}>
-                <Clock fontSize={64} />
+                <Clock fontSize={128} fontWeight="lighter" />
                 <centerbox
                     spacing={64}
                     halign={Gtk.Align.CENTER}

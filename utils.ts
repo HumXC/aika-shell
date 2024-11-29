@@ -171,6 +171,20 @@ function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string | null
         stdin.close();
     }
 }
+
+// TODO: 实现 grim 命令
+// Usage: grim [options...] [output-file]
+
+//   -h              Show help message and quit.
+//   -s <factor>     Set the output image scale factor. Defaults to the
+//                   greatest output scale factor.
+//   -g <geometry>   Set the region to capture.
+//   -t png|ppm|jpeg Set the output filetype. Defaults to png.
+//   -q <quality>    Set the JPEG filetype quality 0-100. Defaults to 80.
+//   -l <level>      Set the PNG filetype compression level 0-9. Defaults to 6.
+//   -o <output>     Set the output name to capture.
+//   -c              Include cursors in the screenshot.
+function grim<T extends string | Gio.OutputStream>() {}
 export {
     sleep,
     setHoverClassName,

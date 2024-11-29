@@ -3,9 +3,11 @@ import { Variable } from "astal";
 export default function Clock({
     fontSize,
     useTooltip = false,
+    fontWeight = "bold",
 }: {
     fontSize: number;
     useTooltip?: boolean;
+    fontWeight?: string;
 }) {
     const time = Variable("").poll(1000, "date");
     return (
@@ -19,7 +21,7 @@ export default function Clock({
             })}
             css={`
                 font-size: ${fontSize}px;
-                font-weight: bold;
+                font-weight: ${fontWeight};
             `}
         />
     );
