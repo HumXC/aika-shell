@@ -1,4 +1,4 @@
-import { Gdk, Gtk } from "astal/gtk3";
+import { App, Gdk, Gtk } from "astal/gtk3";
 import LockScreen from "../widget/lockscreen";
 import Lock from "gi://GtkSessionLock";
 import { timeout } from "astal";
@@ -21,9 +21,10 @@ export default function Handler(request: string) {
         Gdk.Display.get_default()!.sync();
     };
     const window = LockScreen();
-    doLock(window);
-    window.connect("destroy", () => {
-        doUnlock(window);
-    });
-    timeout(5000, () => doUnlock(window));
+    // doLock(window);
+    // window.connect("destroy", () => {
+    //     doUnlock(window);
+    // });
+    // timeout(5000, () => doUnlock(window));
+    window.show_all();
 }

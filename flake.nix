@@ -23,6 +23,7 @@
             wireplumber
             bluetooth
             notifd
+            auth
             pkgs.gtk-session-lock
           ];
         ags = inputs.ags.packages.${system}.default.override {
