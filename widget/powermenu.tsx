@@ -62,7 +62,6 @@ export default function Powermenu() {
                                 self.className = "PowermenuIcon";
                             }
                         });
-                        self.connect("hover", () => select.set(index));
                     }}
                 />
             </box>
@@ -72,15 +71,26 @@ export default function Powermenu() {
         <window
             keymode={Astal.Keymode.EXCLUSIVE}
             exclusivity={Astal.Exclusivity.IGNORE}
-            onKeyPressEvent={(self, e) => {
-                if (e.get_keyval()[1] == Gdk.KEY_Escape) {
-                    self.close();
-                }
-                if (e.get_keyval()[1] == Gdk.KEY_Return) {
-                    if (select.get() === -1) return;
-                    const item = cfg[select.get()];
-                    execAsync(["bash", "-c", item.action]);
-                    self.close();
+            onKeyReleaseEvent={(self, e) => {
+                const key = e.get_keyval()[1];
+                switch (key) {
+                    case Gdk.KEY_Escape:
+                        self.close();
+                        break;
+                    case Gdk.KEY_Return:
+                        if (select.get() === -1) return;
+                        const item = cfg[select.get()];
+                        execAsync(["bash", "-c", item.action]);
+                        self.close();
+                        break;
+                    case Gdk.KEY_a:
+                    case Gdk.KEY_w:
+                        select.set((select.get() - 1 + cfg.length) % cfg.length);
+                        break;
+                    case Gdk.KEY_d:
+                    case Gdk.KEY_s:
+                        select.set((select.get() + 1) % cfg.length);
+                        break;
                 }
             }}
             anchor={
