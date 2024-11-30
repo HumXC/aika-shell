@@ -18,13 +18,13 @@ $tray_item_hover_color: rgba(255, 255, 255, 0.269);
 label {
     color: #{public-colors.$theme_fg_color};
 }
-label.Clock {
-    color: $base_color;
-}
+
 window.Bar {
     background: transparent;
     color: transparent;
-
+    .Clock {
+        color: $base_color;
+    }
     > centerbox {
         padding: 6px 8px;
         background: $bar_bg_color;

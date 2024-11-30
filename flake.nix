@@ -25,6 +25,7 @@
             notifd
             auth
             pkgs.gtk-session-lock
+            pkgs.imagemagick
           ];
         ags = inputs.ags.packages.${system}.default.override {
           extraPackages = extraPackages;
