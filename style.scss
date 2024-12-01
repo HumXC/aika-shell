@@ -70,13 +70,6 @@ eventbox.StatusIndicators-hover {
         color: $selected_color;
     }
 }
-box.FloatingMenu {
-    background: $bar_bg_color;
-    border-radius: 10px;
-}
-box.PopupWindow {
-    margin: 8px;
-}
 box.Workspace {
     background: $base_bg_color;
     border-radius: #{$radius};
@@ -115,4 +108,9 @@ window.Powermenu {
         background: rgb(54, 54, 54);
         color: rgb(205, 205, 205);
     }
+}
+box.VolumeTooltip,
+box.BrightnessTooltip {
+    background: $bar_bg_color;
+    padding: 10px;
 }
