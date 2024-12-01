@@ -1,4 +1,4 @@
-import { bind, Binding, exec, execAsync, GLib, timeout, Variable } from "astal";
+import { AstalIO, bind, Binding, exec, execAsync, GLib, idle, timeout, Variable } from "astal";
 import { Gdk, Gtk } from "astal/gtk3";
 import Auth from "gi://AstalAuth";
 import { Clock } from "./top-bar";
@@ -54,7 +54,7 @@ export default function LockScreen() {
         });
     const err = new Variable("");
     const inputState = new Variable(false);
-    const animateDuration = 200;
+    const animateDuration = 500;
     // 背景
     const background = (
         <box
@@ -86,9 +86,16 @@ export default function LockScreen() {
                         padding-bottom: 600px;
                         text-shadow: 0 0 5px #000;
                     `}
-                    transitionDuration={animateDuration}
                     transitionType={Gtk.RevealerTransitionType.CROSSFADE}
-                    revealChild={inputState().as((t) => !t)}
+                    setup={(self) => {
+                        self.hook(bind(inputState), (_, t) => {
+                            if (!t) self.transitionDuration = animateDuration / 2;
+                            else self.transitionDuration = animateDuration * 1.5;
+                        });
+                    }}
+                    revealChild={inputState().as((t) => {
+                        return !t;
+                    })}
                 >
                     <Clock fontSize={128} fontWeight="normal" />
                 </revealer>
@@ -97,6 +104,18 @@ export default function LockScreen() {
             </centerbox>
         </box>
     );
+    const entry = (
+        <entry
+            visibility={false}
+            css={`
+                border-radius: 20px;
+                margin: 64px 10px 12px 10px;
+                background-color: rgba(0, 0, 0, 0.5);
+                border: 1px solid #fff;
+                box-shadow: 0 0 2px #000;
+            `}
+        />
+    ) as Gtk.Entry;
     const inputPage = (
         <box
             className={"LockScreen"}
@@ -125,47 +144,7 @@ export default function LockScreen() {
                         css={"font-size: 32px; margin-top: 12px; text-shadow: 0 0 5px #000;"}
                     />
                     <box vertical={true}>
-                        <entry
-                            visibility={false}
-                            css={`
-                                border-radius: 20px;
-                                margin: 64px 10px 12px 10px;
-                                background-color: rgba(0, 0, 0, 0.5);
-                                border: 1px solid #fff;
-                                box-shadow: 0 0 2px #000;
-                            `}
-                            setup={(self) => {
-                                self.hook(bind(inputState), (state) => {
-                                    if (state)
-                                        timeout(animateDuration, () => {
-                                            self.text = "";
-                                            err.set("");
-                                            self.grab_focus();
-                                        });
-                                });
-                            }}
-                            onKeyPressEvent={(self, e) => {
-                                if (e.get_keyval()[1] !== Gdk.KEY_Return) return;
-                                err.set("");
-                                const password = self.text;
-                                if (password.length === 0) return;
-                                self.editable = false;
-                                auth(password)
-                                    .then(() => {
-                                        const window = self.get_toplevel();
-                                        window?.destroy();
-                                        return;
-                                    })
-                                    .catch((error) => {
-                                        err.set(error.message);
-                                        try {
-                                            self.editable = true;
-                                            self.grab_focus();
-                                            self.select_region(0, -1);
-                                        } catch (e) {}
-                                    });
-                            }}
-                        />
+                        {entry}
                         <label halign={Gtk.Align.CENTER} label={err()} />
                     </box>
                 </box>
@@ -191,12 +170,58 @@ export default function LockScreen() {
             </overlay>
         ),
     });
+    let revealing = false;
+    let canReveal = true;
+    let timer: AstalIO.Time | null = null;
     window.connect("key-press-event", (self, e) => {
-        if (e.get_keyval()[1] === Gdk.KEY_Escape && inputState.get()) {
+        if (!canReveal) return;
+        const doReveal = () => {
+            revealing = true;
+            if (timer) timer.cancel();
+
+            let t = animateDuration;
+            if (!inputState.get()) {
+                t = animateDuration * 1.5; // 时钟的关闭时间是1.5倍于背景的打开时间
+            }
+            timer = timeout(animateDuration, () => {
+                revealing = false;
+                idle(() => {
+                    entry.text = "";
+                    err.set("");
+                    if (inputState.get()) {
+                        entry.editable = true;
+                        entry.grab_focus();
+                    }
+                });
+            });
+        };
+        if (canReveal && e.get_keyval()[1] === Gdk.KEY_Escape && inputState.get()) {
+            doReveal();
             inputState.set(false);
         }
-        if (e.get_keyval()[1] === Gdk.KEY_Return && !inputState.get()) {
+        if (canReveal && e.get_keyval()[1] === Gdk.KEY_Return && !inputState.get()) {
+            doReveal();
             inputState.set(true);
+        }
+        if (!revealing && e.get_keyval()[1] === Gdk.KEY_Return && inputState.get()) {
+            err.set("");
+            const password = entry.text;
+            if (password.length === 0) return;
+            entry.editable = false;
+            canReveal = false;
+            auth(password)
+                .then(() => self.destroy())
+                .catch((error) => {
+                    err.set(error.message);
+                    idle(() => {
+                        entry.grab_focus();
+                        entry.select_region(0, -1);
+                    });
+                })
+                .finally(() => {
+                    canReveal = true;
+                    entry.editable = true;
+                });
         }
     });
 
