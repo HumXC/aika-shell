@@ -109,8 +109,10 @@ window.Powermenu {
         color: rgb(205, 205, 205);
     }
 }
+box.PopupWindow {
+    background: $bar_bg_color;
+}
 box.VolumeTooltip,
 box.BrightnessTooltip {
-    background: $bar_bg_color;
     padding: 10px;
 }

@@ -186,24 +186,17 @@ function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string | null
 //   -c              Include cursors in the screenshot.
 function grim<T extends string | Gio.OutputStream>() {}
 
-type HyprlandOptionType = "custom" | "int";
-type HyprlandOptionResultType<T extends HyprlandOptionType> = T extends "custom"
-    ? string
-    : T extends "int"
-    ? number
-    : never;
-function getHyprloandOption<T>(
+function getHyprloandOption<T extends string | number>(
     option: string,
-    type: HyprlandOptionType
-): HyprlandOptionResultType<typeof type> | null {
+    type: "custom" | "int"
+): string | null {
     const opt: {
         option: string;
         set: boolean;
     } = JSON.parse(exec(["hyprctl", "-j", "getoption", option]));
     if (!opt.set) return null;
-    return (opt as any)[type] as HyprlandOptionResultType<typeof type>;
+    return (opt as any)[type];
 }
-const a = getHyprloandOption("s", "int");
 export {
     sleep,
     setHoverClassName,

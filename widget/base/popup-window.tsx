@@ -1,7 +1,7 @@
 import { Astal, Gdk, Gtk } from "astal/gtk3";
 import GtkLayerShell from "gi://GtkLayerShell?version=0.1";
 import { BindableChild } from "astal/gtk3/astalify";
-import { exec } from "astal";
+import Hyprland from "gi://AstalHyprland";
 import { getHyprloandOption } from "../../utils";
 export default function PopupWindow({
     trigger,
@@ -18,52 +18,34 @@ export default function PopupWindow({
     children?: Array<BindableChild>;
     closing?: (self: Astal.Window) => boolean;
 }) {
+    const hypr = Hyprland.get_default();
     const gapsOption = getHyprloandOption("general:gaps_out", "custom");
     let gaps = [0, 0, 0, 0];
     if (gapsOption) gaps = gapsOption.split(" ").map(Number);
-    const roundingOption: {
-        option: string;
-        int: number;
-        set: boolean;
-    } = JSON.parse(exec(["hyprctl", "-j", "getoption", "general:gaps_out"]));
-    let rounding = 0;
-    if (roundingOption.set) gaps = gapsOption.custom.split(" ").map(Number);
+    const roundingOption = getHyprloandOption("decoration:rounding", "int");
+    let rounding = "0";
+    if (roundingOption) rounding = roundingOption;
+    const scale = hypr.focusedMonitor.scale;
+
     const windowSetup = (self: Astal.Window) => {
         const triggerLocation = trigger.get_allocation();
         const widgetLocation = self.get_child()!.get_allocation();
-        const windowWidth = self.get_screen().get_width();
-        const windowHeight = self.get_screen().get_height();
+        const windowWidth = hypr.focusedMonitor.width / scale;
+        const windowHeight = hypr.focusedMonitor.height / scale;
         const [_, triggerX, triggerY] = trigger.get_window()!.get_origin();
-        print(
-            "triggerLocation",
-            triggerLocation.x,
-            triggerLocation.y,
-            triggerLocation.width,
-            triggerLocation.height
-        );
-        print(
-            "widgetLocation",
-            widgetLocation.x,
-            widgetLocation.y,
-            widgetLocation.width,
-            widgetLocation.height
-        );
-        print("triggerX", triggerX, "triggerY", triggerY);
-        print("windowWidth", windowWidth, "windowHeight", windowHeight);
+
         let anchors: GtkLayerShell.Edge[] = [];
         let offset = 0;
         const getWidthOffset = () => {
             offset = triggerX - widgetLocation.width / 2 + triggerLocation.width / 2;
             if (offset + widgetLocation.width > windowWidth) {
-                print("offset overflow");
-                offset = windowWidth - widgetLocation.width;
+                offset = windowWidth - widgetLocation.width + 1;
             }
         };
         const getHeightOffset = () => {
             offset = triggerY - widgetLocation.height / 2 + triggerLocation.height / 2;
             if (offset + widgetLocation.height > windowHeight) {
-                print("offset overflow");
-                offset = windowHeight - widgetLocation.height;
+                offset = windowHeight - widgetLocation.height + 1;
             }
         };
         switch (forward) {
@@ -91,7 +73,6 @@ export default function PopupWindow({
         GtkLayerShell.set_anchor(self, anchors[0], true);
         GtkLayerShell.set_anchor(self, anchors[1], true);
         GtkLayerShell.set_margin(self, anchors[2], offset);
-        print("offset", offset);
     };
 
     return (
@@ -111,9 +92,20 @@ export default function PopupWindow({
             css={"background: transparent;"}
         >
             <box
+                setup={(self) => {
+                    self.set_clip(
+                        new Gdk.Rectangle({
+                            x: 0,
+                            y: 0,
+                            width: 10,
+                            height: self.get_screen().get_height(),
+                        })
+                    );
+                }}
                 className={"PopupWindow"}
                 css={`
                     margin: ${gaps[0]}px ${gaps[1]}px ${gaps[2]}px ${gaps[3]}px;
+                    border-radius: ${rounding}px;
                 `}
             >
                 {child}

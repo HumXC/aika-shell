@@ -55,7 +55,6 @@ export default function LockScreen() {
     const err = new Variable("");
     const inputState = new Variable(false);
     const animateDuration = 500;
-    // 背景
     const background = (
         <box
             onDestroy={() => {
@@ -183,16 +182,16 @@ export default function LockScreen() {
             if (!inputState.get()) {
                 t = animateDuration * 1.5; // 时钟的关闭时间是1.5倍于背景的打开时间
             }
-            timer = timeout(animateDuration, () => {
+            idle(() => {
+                entry.text = "";
+                err.set("");
+                if (inputState.get()) {
+                    entry.editable = true;
+                    entry.grab_focus();
+                }
+            });
+            timer = timeout(t, () => {
                 revealing = false;
-                idle(() => {
-                    entry.text = "";
-                    err.set("");
-                    if (inputState.get()) {
-                        entry.editable = true;
-                        entry.grab_focus();
-                    }
-                });
             });
         };
         if (canReveal && e.get_keyval()[1] === Gdk.KEY_Escape && inputState.get()) {
@@ -210,17 +209,17 @@ export default function LockScreen() {
             entry.editable = false;
             canReveal = false;
             auth(password)
-                .then(() => self.destroy())
+                .then(() => {
+                    self.destroy();
+                })
                 .catch((error) => {
                     err.set(error.message);
                     idle(() => {
+                        entry.editable = true;
                         entry.grab_focus();
                         entry.select_region(0, -1);
+                        canReveal = true;
                     });
-                })
-                .finally(() => {
-                    canReveal = true;
-                    entry.editable = true;
                 });
         }
     });
