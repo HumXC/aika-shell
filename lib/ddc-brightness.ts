@@ -1,4 +1,4 @@
-import { exec, execAsync, GObject, property, register, signal } from "astal";
+import { execAsync, GObject, property, register, signal } from "astal";
 
 const icons = {
     80: "high",

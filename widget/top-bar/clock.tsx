@@ -1,5 +1,4 @@
 import { Variable } from "astal";
-import { Gtk } from "astal/gtk3";
 
 export default function Clock({
     fontSize,

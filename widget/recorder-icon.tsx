@@ -1,8 +1,6 @@
-import { bind, GLib, timeout, Variable } from "astal";
-import { EventIcon, Space } from "./base";
+import { bind, GLib, Variable } from "astal";
 import wfRecorder from "../lib/wf-recorder";
 import { formatDuration } from "../utils";
-import { Gtk } from "astal/gtk3";
 import Pango from "gi://Pango?version=1.0";
 
 export const RecorderIcon = ({ height }: { height: number }) => {

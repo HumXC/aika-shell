@@ -1,6 +1,6 @@
-import { App, Gdk, Gtk } from "astal/gtk3";
+import { Gdk } from "astal/gtk3";
 import { RegularWindow } from "./base";
-import { exec, idle, timeout } from "astal";
+import { exec, idle } from "astal";
 import Hyprland from "gi://AstalHyprland";
 import { sleep } from "../utils";
 export default function Clipboard() {

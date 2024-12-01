@@ -1,7 +1,6 @@
-import { App, Gdk, Gtk } from "astal/gtk3";
+import { Gdk, Gtk } from "astal/gtk3";
 import LockScreen from "../widget/lockscreen";
 import Lock from "gi://GtkSessionLock";
-import { timeout } from "astal";
 
 export default function Handler(request: string) {
     if (request.endsWith("dev")) {

@@ -1,5 +1,4 @@
-import { bind, Variable } from "astal";
-import { Astal, Gdk, Gtk } from "astal/gtk3";
+import { bind } from "astal";
 import Hyprland from "gi://AstalHyprland";
 
 export default function Workspace({ height }: { height: number }) {

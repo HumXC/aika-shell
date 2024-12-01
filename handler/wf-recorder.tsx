@@ -1,4 +1,4 @@
-import { bind, exec, Gio } from "astal";
+import { exec } from "astal";
 import { formatBytes, notifySend, slurpRect, wlCopy } from "../utils";
 
 import WFRecorder from "../lib/wf-recorder";

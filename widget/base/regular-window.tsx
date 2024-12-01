@@ -1,8 +1,6 @@
-import { Binding, GObject } from "astal";
-import { Astal, ConstructProps, Gtk, astalify } from "astal/gtk3";
+import { GObject } from "astal";
+import { ConstructProps, Gtk, astalify } from "astal/gtk3";
 import { BindableChild } from "astal/gtk3/astalify";
-import { EventBox, EventBoxProps } from "astal/gtk3/widget";
-import GtkLayerShell from "gi://GtkLayerShell?version=0.1";
 class RegularWindow extends astalify(Gtk.Window) {
     static {
         GObject.registerClass({ GTypeName: "RegularWindow" }, this);

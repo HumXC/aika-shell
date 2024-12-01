@@ -1,4 +1,4 @@
-import { AstalIO, bind, Binding, timeout, Variable } from "astal";
+import { AstalIO, bind, timeout, Variable } from "astal";
 import { setHoverClassName } from "../utils";
 import { EventIcon, Space } from "./base";
 import WirePlumber from "gi://AstalWp";
