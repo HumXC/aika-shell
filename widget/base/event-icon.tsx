@@ -8,14 +8,45 @@ class EventIcon extends astalify(EventBox) {
     }
     constructor(props?: EventIconProps, ...children: Array<BindableChild>) {
         super({ children, ...props } as any);
-        let margin = props?.size! / 8;
-        if (props?.padding! >= 0) margin = props?.padding!;
+        if (props === undefined) return;
+        let margin = Math.floor(props.size! / 8);
+        if (props.padding! >= 0) margin = props?.padding!;
+        let fontSize = props.size! - margin * 2;
+        if (props.useCssColor === undefined) props.useCssColor = true;
+        if (props.iconSize === undefined) (props.iconSize as unknown as number) = props.size;
         this.add_child(
             Gtk.Builder.new(),
             <icon
-                icon={props?.iconName}
+                setup={(self) => {
+                    if (props.useCssColor) {
+                        if (typeof props.iconName === "string") self.icon = props.iconName;
+                        else {
+                            self.icon = props.iconName.get();
+                            self.hook(props.iconName, (_, v) => {
+                                self.icon = v;
+                            });
+                        }
+                    } else {
+                        let theme = Gtk.IconTheme.get_default();
+                        if (typeof props.iconName === "string") {
+                            let icon = theme.lookup_icon(props.iconName, props.iconSize!, 0);
+                            self.gIcon = icon?.load_icon()!;
+                        } else {
+                            let icon = theme.lookup_icon(props.iconName.get(), props.iconSize!, 0);
+                            self.gIcon = icon?.load_icon()!;
+                            self.hook(props.iconName, (_, v) => {
+                                let icon = theme.lookup_icon(v, props.iconSize!, 0);
+                                self.gIcon = icon?.load_icon()!;
+                            });
+                        }
+                    }
+                }}
+                iconSize={props.iconSize}
+                pixelSize={props.iconSize}
+                halign={Gtk.Align.CENTER}
+                valign={Gtk.Align.CENTER}
                 css={`
-                    font-size: ${props?.size! - margin * 2}px;
+                    font-size: ${fontSize}px;
                     margin: ${margin}px;
                 `}
             />,
@@ -27,6 +58,8 @@ export type EventIconProps = EventBoxProps &
     ConstructProps<EventIcon, Astal.EventBox.ConstructorProps> & {
         iconName: string | Binding<string>;
         size: number;
+        useCssColor?: boolean;
+        iconSize?: 16 | 22 | 24 | 32 | 64 | 256;
         className?: string;
         padding?: number;
     };

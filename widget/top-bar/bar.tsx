@@ -33,47 +33,50 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
             application={App}
             namespace={"top-bar"}
         >
-            <centerbox
+            <box
                 css={`
                     margin: ${gapTop}px ${gapRight}px 0 ${gapLeft}px;
                 `}
             >
-                <overlay
-                    overlay={<box halign={Gtk.Align.END}>{/* 时钟左侧区域 */}</box>}
-                    hexpand={true}
-                >
-                    <box halign={Gtk.Align.START}>
-                        <EventIcon iconName="nix-snowflake-colours" size={24} />
-                        <Space space={8} />
-                        <Tray height={24} />
-                        <Space space={10} />
-                        <Workspace height={24} />
-                        <Space space={10} />
-                        <NetSpeed height={24} />
-                    </box>
-                </overlay>
-
-                <box halign={Gtk.Align.CENTER}>
-                    <Space space={8} />
-                    <Clock fontSize={16} useTooltip={true} />
-                    <Space space={8} />
-                </box>
-                <overlay
-                    overlay={
-                        <box halign={Gtk.Align.START} hexpand={true}>
-                            {/* 时钟右侧区域 */}
-                            <RecorderIcon height={24} />
+                <Space space={2} />
+                <EventIcon iconName="nix-snowflake-colours" size={30} padding={6} />
+                <Space space={4} />
+                <centerbox>
+                    <overlay
+                        overlay={<box halign={Gtk.Align.END}>{/* 时钟左侧区域 */}</box>}
+                        hexpand={true}
+                    >
+                        <box halign={Gtk.Align.START}>
+                            <Tray height={24} />
+                            <Space space={10} />
+                            <Workspace height={24} />
+                            <Space space={10} />
+                            <NetSpeed height={24} />
                         </box>
-                    }
-                >
-                    <box halign={Gtk.Align.END}>
-                        <StatusIndicators size={24} />
+                    </overlay>
+
+                    <box halign={Gtk.Align.CENTER}>
                         <Space space={8} />
-                        <NotificationsIcon size={24} />
-                        <Space space={2} />
+                        <Clock fontSize={16} useTooltip={true} />
+                        <Space space={8} />
                     </box>
-                </overlay>
-            </centerbox>
+                    <overlay
+                        overlay={
+                            <box halign={Gtk.Align.START} hexpand={true}>
+                                {/* 时钟右侧区域 */}
+                                <RecorderIcon height={24} />
+                            </box>
+                        }
+                    >
+                        <box halign={Gtk.Align.END}>
+                            <StatusIndicators size={24} />
+                        </box>
+                    </overlay>
+                </centerbox>
+                <Space space={4} />
+                <NotificationsIcon size={30} padding={6} />
+                <Space space={4} />
+            </box>
         </window>
     );
 }

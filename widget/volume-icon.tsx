@@ -6,7 +6,7 @@ import { Astal, Gtk } from "astal/gtk3";
 import VolumeTooltip from "./volume-tooltip";
 export default function VolumeIcon({
     size,
-    padding = 4,
+    padding = 2,
     onlyIcon = false,
     currentPopup = null,
 }: {
@@ -61,9 +61,18 @@ export default function VolumeIcon({
     };
     let onHover = false;
     return (
-        <box>
-            <Space space={2} />
+        <box
+            css={`
+                padding: 2px ${padding}px 0 ${padding}px;
+            `}
+            halign={Gtk.Align.CENTER}
+            valign={Gtk.Align.CENTER}
+        >
             <EventIcon
+                halign={Gtk.Align.CENTER}
+                valign={Gtk.Align.CENTER}
+                useCssColor={false}
+                iconSize={32}
                 setup={(self) => {
                     setHoverClassName(self, "Icon");
                     if (onlyIcon) return;
@@ -83,15 +92,14 @@ export default function VolumeIcon({
                     }
                 }}
                 iconName={bind(wp.defaultSpeaker, "volumeIcon")}
-                size={size}
-                padding={3}
+                size={size - padding * 2}
+                padding={0}
                 onScroll={(self, e) => onScroll(e.delta_y)}
                 onClick={(self, e) => {
                     if (e.button == Astal.MouseButton.PRIMARY) return;
                     wp.defaultSpeaker.mute = !wp.defaultSpeaker.mute;
                 }}
             />
-            <Space space={2} />
         </box>
     );
 }

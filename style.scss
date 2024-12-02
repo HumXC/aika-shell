@@ -25,16 +25,13 @@ window.Bar {
     .Clock {
         color: $base_color;
     }
-    > centerbox {
-        padding: 6px 8px;
+    > box {
         background: $bar_bg_color;
         border-radius: #{$radius};
-    }
-    .NotificationIcon {
-        color: $base_color;
-    }
-    .NotificationIcon-hover {
-        color: $selected_color;
+        padding: 0 4px;
+        > centerbox {
+            padding: 6px 0;
+        }
     }
 }
 box.Tray {
@@ -90,9 +87,7 @@ box.RecorderIcon {
     background: $base_bg_color;
     border-radius: #{$radius};
 }
-window.clipboard {
-    background: rgb(71, 71, 71);
-}
+
 window.Powermenu {
     label {
         color: $base_color;

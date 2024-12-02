@@ -9,12 +9,13 @@ export default function StatusIndicators({ size }: { size: number }) {
         <eventbox setup={(self) => setHoverClassName(self, "StatusIndicators")}>
             <box
                 css={`
-                    padding: 0 ${size / 6}px;
+                    padding: 0 ${size / 3}px;
                 `}
+                spacing={size / 6}
             >
                 <VolumeIcon size={size - size / 6} currentPopup={currentPopup} />
                 <BrightnessIcon size={size - size / 6} currentPopup={currentPopup} />
-                <NetworkIcon size={size} padding1={size / 6} padding2={0} />
+                <NetworkIcon size={size - size / 6} />
             </box>
         </eventbox>
     );

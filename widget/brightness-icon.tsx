@@ -8,7 +8,7 @@ import BrightnessTooltip from "./brightness-tooltip";
 
 export default function BrightnessIcon({
     size,
-    padding = 2,
+    padding = 1,
     onlyIcon = false,
     currentPopup = null,
 }: {
@@ -49,6 +49,8 @@ export default function BrightnessIcon({
     let onHover = false;
     return (
         <EventIcon
+            useCssColor={false}
+            iconSize={64}
             setup={(self) => {
                 setHoverClassName(self, "Icon");
                 self.hook(ddc, "brightness-changed", (self, val: number) => {

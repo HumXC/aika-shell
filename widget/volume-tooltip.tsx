@@ -33,8 +33,8 @@ export default function VolumeTooltip({
                 onHover={(self, e) => onHover(self.parent as Astal.Window, e)}
                 onHoverLost={(self, e) => onHoverLost(self.parent as Astal.Window, e)}
             >
-                <box className={"VolumeTooltip"} vertical={true}>
-                    <VolumeIcon size={32} onlyIcon={true} padding={0} />
+                <box className={"VolumeTooltip"} vertical={true} spacing={2}>
+                    <VolumeIcon size={22} onlyIcon={true} padding={0} />
                     <slider
                         setup={(self) => {
                             self.value = wp.defaultSpeaker.volume * 100;

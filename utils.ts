@@ -186,10 +186,7 @@ function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string | null
 //   -c              Include cursors in the screenshot.
 function grim<T extends string | Gio.OutputStream>() {}
 
-function getHyprloandOption<T extends string | number>(
-    option: string,
-    type: "custom" | "int"
-): string | null {
+function getHyprloandOption(option: string, type: "custom" | "int"): string | null {
     const opt: {
         option: string;
         set: boolean;

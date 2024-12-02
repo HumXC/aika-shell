@@ -7,7 +7,13 @@ import { GetConfig, SaveConfig } from "../configs";
 class Cfg {
     isDontDisturb: boolean = false;
 }
-export default function NotificationsIcon({ size }: { size: number }) {
+export default function NotificationsIcon({
+    size,
+    padding = 4,
+}: {
+    size: number;
+    padding?: number;
+}) {
     const notifd = Notifd.get_default();
     const config = GetConfig(Cfg, "notifications-icon");
 
@@ -66,42 +72,53 @@ export default function NotificationsIcon({ size }: { size: number }) {
     );
     setIcon();
     return (
-        <EventIcon
-            onButtonPressEvent={(self, e) => {
-                if (e.get_button()[1] === Gdk.BUTTON_SECONDARY) {
-                    let location = self.get_allocation();
-                    let rect = new Gdk.Rectangle({
-                        x: location.x,
-                        y: location.y,
-                        height: location.height,
-                    });
-                    menu?.popup_at_rect(
-                        self.get_window()!,
-                        rect,
-                        Gdk.Gravity.SOUTH,
-                        Gdk.Gravity.CENTER,
-                        null
-                    );
-                }
-                if (e.get_button()[1] === Gdk.BUTTON_MIDDLE) {
-                    notifd.dontDisturb = !notifd.dontDisturb;
-                    if (notifd.dontDisturb) {
-                        menuDoDisturb.show();
-                        menuDontDisturb.hide();
-                    } else {
-                        menuDoDisturb.hide();
-                        menuDontDisturb.show();
+        <box
+            css={`
+                padding: 1px ${padding}px 0 ${padding}px;
+            `}
+            halign={Gtk.Align.CENTER}
+            valign={Gtk.Align.CENTER}
+        >
+            <EventIcon
+                useCssColor={false}
+                iconSize={64}
+                padding={0}
+                onButtonPressEvent={(self, e) => {
+                    if (e.get_button()[1] === Gdk.BUTTON_SECONDARY) {
+                        let location = self.get_allocation();
+                        let rect = new Gdk.Rectangle({
+                            x: location.x,
+                            y: location.y,
+                            height: location.height,
+                        });
+                        menu?.popup_at_rect(
+                            self.get_window()!,
+                            rect,
+                            Gdk.Gravity.SOUTH,
+                            Gdk.Gravity.CENTER,
+                            null
+                        );
                     }
-                }
-            }}
-            onDestroy={() => {
-                menu.destroy();
-                connect.forEach((id) => notifd.disconnect(id));
-            }}
-            setup={(self) => setHoverClassName(self, "NotificationIcon")}
-            iconName={iconName()}
-            size={size}
-            className={"NotificationIcon"}
-        />
+                    if (e.get_button()[1] === Gdk.BUTTON_MIDDLE) {
+                        notifd.dontDisturb = !notifd.dontDisturb;
+                        if (notifd.dontDisturb) {
+                            menuDoDisturb.show();
+                            menuDontDisturb.hide();
+                        } else {
+                            menuDoDisturb.hide();
+                            menuDontDisturb.show();
+                        }
+                    }
+                }}
+                onDestroy={() => {
+                    menu.destroy();
+                    connect.forEach((id) => notifd.disconnect(id));
+                }}
+                setup={(self) => setHoverClassName(self, "NotificationIcon")}
+                iconName={iconName()}
+                size={size - padding * 2}
+                className={"NotificationIcon"}
+            />
+        </box>
     );
 }
