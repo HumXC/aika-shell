@@ -22,7 +22,7 @@ export default function NotificationsIcon({
 }) {
     const notifd = Notifd.get_default();
     notifd.connect("notified", (_, n) => {
-        print("notified", n.toString());
+        print("notified", n.toString(), notifd.notifications.length);
     });
     const config = GetConfig(Cfg, "notifications-icon");
     const iconName = Variable("notifications-symbolic");
@@ -49,7 +49,7 @@ export default function NotificationsIcon({
                 iconName.set("notifications-symbolic");
         }
     };
-    notifd.dontDisturb = config.isDontDisturb;
+    notifd.set_dont_disturb(config.isDontDisturb);
     setIcon();
     return (
         <box
@@ -75,7 +75,7 @@ export default function NotificationsIcon({
                     if (e.get_button()[1] === Gdk.BUTTON_SECONDARY) {
                     }
                     if (e.get_button()[1] === Gdk.BUTTON_MIDDLE) {
-                        notifd.dontDisturb = !notifd.dontDisturb;
+                        notifd.set_dont_disturb(!notifd.dontDisturb);
                     }
                 }}
                 setup={(self) => {
