@@ -1,4 +1,4 @@
-import { exec, Gio, GLib } from "astal";
+import { exec, execAsync, Gio, GLib } from "astal";
 import { EventBox } from "astal/gtk3/widget";
 import { Slurp as slurpConfig } from "./configs";
 import { Gdk } from "astal/gtk3";
@@ -62,8 +62,8 @@ function notifySend(
         action: string;
         icon: string;
     }>
-): Error | null {
-    const cmd = ["slurp"];
+) {
+    const cmd = ["notify-send"];
     const addCmd = (option: string, arg: string | undefined, cfg: string) => {
         if (arg) cmd.push(`-${option}`, `${arg}`);
         else if (cfg !== "") cmd.push(`-${option}`, `${cfg}`);
@@ -78,13 +78,8 @@ function notifySend(
     if (options?.wait === true) cmd.push("-w");
     addCmd("A", options?.action, "");
     if (options?.icon) cmd.push("-i", options.icon);
-    cmd.push(summary, body);
-    try {
-        exec(cmd);
-        return null;
-    } catch (e) {
-        return e as Error;
-    }
+    cmd.push('"' + summary + '"', '"' + body + '"');
+    execAsync(cmd).catch((e) => print("通知发送失败", e));
 }
 function slurp(
     args?: Partial<{
