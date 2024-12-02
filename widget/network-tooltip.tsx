@@ -39,12 +39,12 @@ export default function NetworkTooltip({
             case Network.Primary.WIFI:
                 if (
                     network.wifi.device.ipInterface === null ||
-                    network.wifi.activeAccessPoint.frequency === null
+                    network.wifi.activeAccessPoint === null
                 )
                     return;
                 netName.set(network.wifi.ssid);
                 ipInterface.set(network.wifi.device.ipInterface);
-                speed.set(network.wifi.activeAccessPoint.frequency.toString() + "MHz");
+                speed.set(network.wifi.activeAccessPoint.frequency > 5000 ? "5Ghz" : "2.4Ghz");
                 break;
             case Network.Primary.WIRED:
                 if (
@@ -85,6 +85,7 @@ export default function NetworkTooltip({
                     <box valign={Gtk.Align.START}>
                         <NetworkIcon size={38} onlyIcon={true} padding={0} />
                     </box>
+                    <Space space={2} />
                     <box vertical={true} spacing={2} css={"padding: 3px 0 0 0;"}>
                         <box valign={Gtk.Align.CENTER} vexpand={true}>
                             <label

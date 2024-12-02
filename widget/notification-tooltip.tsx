@@ -1,6 +1,6 @@
 import { Astal, Gtk } from "astal/gtk3";
 import PopupWindow from "./base/popup-window";
-import { bind } from "astal";
+import { bind, timeout } from "astal";
 import { EventIcon, Space } from "./base";
 import Notifd from "gi://AstalNotifd";
 import { setHoverClassName } from "../utils";
@@ -51,10 +51,10 @@ export default function NotificationTooltip({
                             }}
                         />
                     </box>
-                    <box
+                    {/* <box
                         heightRequest={8}
                         visible={bind(notifd, "notifications").as((ns) => ns.length > 0)}
-                    />
+                    /> */}
                     {(() => {
                         const filtered = new Map<
                             string,
@@ -70,7 +70,6 @@ export default function NotificationTooltip({
                             }
                             filtered.get(n.appName)!.count++;
                         });
-
                         return Array.from(filtered.values()).map((n) => {
                             return (
                                 <box halign={Gtk.Align.FILL} valign={Gtk.Align.CENTER}>
@@ -111,7 +110,8 @@ export default function NotificationTooltip({
                                                     nn.dismiss();
                                                 }
                                             });
-                                            self.parent.destroy();
+                                            const box = self.parent.parent;
+                                            self.parent.visible = false;
                                         }}
                                         iconName={"edit-delete-symbolic"}
                                         size={28}
