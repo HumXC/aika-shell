@@ -3,8 +3,14 @@ import BrightnessIcon from "../brightness-icon";
 import NetworkIcon from "../network-icon";
 import VolumeIcon from "../volume-icon";
 import { Variable } from "astal";
-export default function StatusIndicators({ size }: { size: number }) {
-    const currentPopup = Variable("");
+export default function StatusIndicators({
+    size,
+    currentPopup = null,
+}: {
+    size: number;
+    currentPopup: Variable<string> | null;
+}) {
+    if (currentPopup === null) currentPopup = Variable("");
     return (
         <eventbox setup={(self) => setHoverClassName(self, "StatusIndicators")}>
             <box

@@ -107,8 +107,16 @@ window.Powermenu {
 box.PopupWindow {
     background: $bar_bg_color;
 }
-box.VolumeTooltip,
-box.BrightnessTooltip,
-box.NetworkTooltip {
-    padding: 10px;
+
+box.NotificationTooltip {
+    .NotificationIcon {
+        background: rgba(255, 255, 255, 0.098);
+        border-radius: 20%;
+    }
+    .NotificationIconClearButton {
+        color: rgba(174, 174, 174, 0.68);
+    }
+    .NotificationIconClearButton-hover {
+        color: rgba(255, 44, 44, 0.68);
+    }
 }

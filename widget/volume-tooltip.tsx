@@ -33,7 +33,14 @@ export default function VolumeTooltip({
                 onHover={(self, e) => onHover(self.parent as Astal.Window, e)}
                 onHoverLost={(self, e) => onHoverLost(self.parent as Astal.Window, e)}
             >
-                <box className={"VolumeTooltip"} vertical={true} spacing={2}>
+                <box
+                    className={"VolumeTooltip"}
+                    vertical={true}
+                    spacing={2}
+                    css={`
+                        padding: 10px;
+                    `}
+                >
                     <VolumeIcon size={22} onlyIcon={true} padding={0} />
                     <slider
                         setup={(self) => {

@@ -37,11 +37,21 @@ export default function NetworkTooltip({
     const setLabel = () => {
         switch (network.primary) {
             case Network.Primary.WIFI:
+                if (
+                    network.wifi.device.ipInterface === null ||
+                    network.wifi.activeAccessPoint.frequency === null
+                )
+                    return;
                 netName.set(network.wifi.ssid);
                 ipInterface.set(network.wifi.device.ipInterface);
-                speed.set(network.wifi.device.ip4Config.addresses[0]);
+                speed.set(network.wifi.activeAccessPoint.frequency.toString() + "MHz");
                 break;
             case Network.Primary.WIRED:
+                if (
+                    network.wired.device.ipInterface === null ||
+                    network.wired.device.speed === null
+                )
+                    return;
                 netName.set("Wired");
                 ipInterface.set(network.wired.device.ipInterface);
                 speed.set(network.wired.device.speed.toString() + "Mbps");
@@ -53,7 +63,10 @@ export default function NetworkTooltip({
                 break;
         }
     };
-    network.connect("notify", () => setIcon());
+    network.connect("notify", () => {
+        setIcon();
+        setLabel();
+    });
     setIcon();
     setLabel();
     return (
@@ -62,43 +75,46 @@ export default function NetworkTooltip({
                 onHover={(self, e) => onHover(self.parent as Astal.Window, e)}
                 onHoverLost={(self, e) => onHoverLost(self.parent as Astal.Window, e)}
             >
-                <box className={"NetworkTooltip"} vertical={true} spacing={2}>
-                    <box>
-                        <box valign={Gtk.Align.START}>
-                            <NetworkIcon size={38} onlyIcon={true} padding={0} />
-                        </box>{" "}
-                        <Space space={6} />
-                        <box vertical={true} spacing={2} css={"padding: 3px 0 0 0;"}>
-                            <box valign={Gtk.Align.CENTER} vexpand={true}>
-                                <label
-                                    halign={Gtk.Align.START}
-                                    className={"NetworkName"}
-                                    label={netName()}
-                                    css={`
-                                        font-size: 14px;
-                                    `}
-                                />
-                                <Space space={4} />
-                                <label
-                                    halign={Gtk.Align.START}
-                                    className={"NetworkInterface"}
-                                    label={ipInterface()}
-                                    css={`
-                                        font-size: 12px;
-                                        color: #888;
-                                    `}
-                                />
-                            </box>
+                <box
+                    className={"NetworkTooltip"}
+                    spacing={6}
+                    css={`
+                        padding: 10px;
+                    `}
+                >
+                    <box valign={Gtk.Align.START}>
+                        <NetworkIcon size={38} onlyIcon={true} padding={0} />
+                    </box>
+                    <box vertical={true} spacing={2} css={"padding: 3px 0 0 0;"}>
+                        <box valign={Gtk.Align.CENTER} vexpand={true}>
                             <label
-                                visible={speed().as((s) => (s === "" ? false : true))}
-                                className={"NetworkSpeed"}
                                 halign={Gtk.Align.START}
-                                label={speed()}
+                                className={"NetworkName"}
+                                label={netName()}
+                                css={`
+                                    font-size: 14px;
+                                `}
+                            />
+                            <Space space={4} />
+                            <label
+                                halign={Gtk.Align.START}
+                                className={"NetworkInterface"}
+                                label={ipInterface()}
                                 css={`
                                     font-size: 12px;
+                                    color: #888;
                                 `}
                             />
                         </box>
+                        <label
+                            visible={speed().as((s) => (s === "" ? false : true))}
+                            className={"NetworkSpeed"}
+                            halign={Gtk.Align.START}
+                            label={speed()}
+                            css={`
+                                font-size: 12px;
+                            `}
+                        />
                     </box>
                 </box>
             </eventbox>

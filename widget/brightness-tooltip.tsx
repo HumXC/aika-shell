@@ -23,7 +23,14 @@ export default function BrightnessTooltip({
                 onHover={(self, e) => onHover(self.parent as Astal.Window, e)}
                 onHoverLost={(self, e) => onHoverLost(self.parent as Astal.Window, e)}
             >
-                <box className={"BrightnessTooltip"} vertical={true} spacing={2}>
+                <box
+                    className={"BrightnessTooltip"}
+                    vertical={true}
+                    spacing={2}
+                    css={`
+                        padding: 10px;
+                    `}
+                >
                     <BrightnessIcon size={28} onlyIcon={true} padding={1} />
                     <slider
                         setup={(self) => {

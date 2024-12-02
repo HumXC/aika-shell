@@ -7,7 +7,7 @@ import StatusIndicators from "./status-indicators";
 import Workspace from "./workspace";
 import NotificationsIcon from "../notifications-icon";
 import { RecorderIcon } from "../recorder-icon";
-import { exec } from "astal";
+import { exec, Variable } from "astal";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     const gapsOption: {
         option: string;
@@ -24,6 +24,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
         gapRight = gaps[1];
         gapLeft = gaps[3];
     }
+    const currentPopup = Variable("");
     return (
         <window
             className="Bar"
@@ -69,12 +70,12 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                         }
                     >
                         <box halign={Gtk.Align.END}>
-                            <StatusIndicators size={24} />
+                            <StatusIndicators size={24} currentPopup={currentPopup} />
                         </box>
                     </overlay>
                 </centerbox>
                 <Space space={4} />
-                <NotificationsIcon size={30} padding={6} />
+                <NotificationsIcon size={30} padding={6} currentPopup={currentPopup} />
                 <Space space={4} />
             </box>
         </window>

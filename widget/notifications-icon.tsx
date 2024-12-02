@@ -4,38 +4,27 @@ import { EventIcon } from "./base";
 import Notifd from "gi://AstalNotifd";
 import { Gdk, Gtk } from "astal/gtk3";
 import { GetConfig, SaveConfig } from "../configs";
-class Cfg {
+import { SetupTooltip } from "./tooltip";
+import NotificationTooltip from "./notification-tooltip";
+export class Cfg {
     isDontDisturb: boolean = false;
 }
 export default function NotificationsIcon({
     size,
     padding = 4,
+    onlyIcon = false,
+    currentPopup = null,
 }: {
     size: number;
     padding?: number;
+    onlyIcon?: boolean;
+    currentPopup?: Variable<string> | null;
 }) {
     const notifd = Notifd.get_default();
+    notifd.connect("notified", (_, n) => {
+        print("notified", n.toString());
+    });
     const config = GetConfig(Cfg, "notifications-icon");
-
-    const menu = new Gtk.Menu();
-    const menuDontDisturb = new Gtk.MenuItem({ label: "Don't disturb" });
-    const menuDoDisturb = new Gtk.MenuItem({ label: "Do disturb" });
-    menuDontDisturb.connect("activate", () => {
-        notifd.dontDisturb = true;
-        menu.popdown();
-        menuDontDisturb.hide();
-        menuDoDisturb.show();
-    });
-    menuDoDisturb.connect("activate", () => {
-        notifd.dontDisturb = false;
-        menu.popdown();
-        menuDoDisturb.hide();
-        menuDontDisturb.show();
-    });
-    menu.add(menuDontDisturb);
-    menu.add(menuDoDisturb);
-    if (notifd.dontDisturb) menuDoDisturb.show();
-    else menuDontDisturb.show();
     const iconName = Variable("notifications-symbolic");
     const setIcon = () => {
         if (notifd.dontDisturb) {
@@ -61,15 +50,6 @@ export default function NotificationsIcon({
         }
     };
     notifd.dontDisturb = config.isDontDisturb;
-    const connect: number[] = [];
-    connect.push(notifd.connect("notify::notifications", () => setIcon()));
-    connect.push(
-        notifd.connect("notify::dont-disturb", () => {
-            config.isDontDisturb = notifd.dontDisturb;
-            SaveConfig();
-            setIcon();
-        })
-    );
     setIcon();
     return (
         <box
@@ -78,6 +58,14 @@ export default function NotificationsIcon({
             `}
             halign={Gtk.Align.CENTER}
             valign={Gtk.Align.CENTER}
+            setup={(self) => {
+                self.hook(bind(notifd, "notifications"), () => setIcon());
+                self.hook(bind(notifd, "dontDisturb"), () => {
+                    setIcon();
+                    config.isDontDisturb = notifd.dontDisturb;
+                    SaveConfig();
+                });
+            }}
         >
             <EventIcon
                 useCssColor={false}
@@ -85,36 +73,22 @@ export default function NotificationsIcon({
                 padding={0}
                 onButtonPressEvent={(self, e) => {
                     if (e.get_button()[1] === Gdk.BUTTON_SECONDARY) {
-                        let location = self.get_allocation();
-                        let rect = new Gdk.Rectangle({
-                            x: location.x,
-                            y: location.y,
-                            height: location.height,
-                        });
-                        menu?.popup_at_rect(
-                            self.get_window()!,
-                            rect,
-                            Gdk.Gravity.SOUTH,
-                            Gdk.Gravity.CENTER,
-                            null
-                        );
                     }
                     if (e.get_button()[1] === Gdk.BUTTON_MIDDLE) {
                         notifd.dontDisturb = !notifd.dontDisturb;
-                        if (notifd.dontDisturb) {
-                            menuDoDisturb.show();
-                            menuDontDisturb.hide();
-                        } else {
-                            menuDoDisturb.hide();
-                            menuDontDisturb.show();
-                        }
                     }
                 }}
-                onDestroy={() => {
-                    menu.destroy();
-                    connect.forEach((id) => notifd.disconnect(id));
+                setup={(self) => {
+                    setHoverClassName(self, "NotificationIcon");
+                    if (!onlyIcon)
+                        SetupTooltip(
+                            self,
+                            NotificationTooltip,
+                            "notifications-icon",
+                            "bottom",
+                            currentPopup
+                        );
                 }}
-                setup={(self) => setHoverClassName(self, "NotificationIcon")}
                 iconName={iconName()}
                 size={size - padding * 2}
                 className={"NotificationIcon"}
