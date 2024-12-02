@@ -108,6 +108,7 @@ box.PopupWindow {
     background: $bar_bg_color;
 }
 box.VolumeTooltip,
-box.BrightnessTooltip {
+box.BrightnessTooltip,
+box.NetworkTooltip {
     padding: 10px;
 }

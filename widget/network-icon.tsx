@@ -3,9 +3,22 @@ import Network from "gi://AstalNetwork";
 import { EventIcon } from "./base";
 import { setHoverClassName } from "../utils";
 import { Gtk } from "astal/gtk3";
-// padding1 是 断网图标的边距
-// padding2 是 联网图标的边距
-export default function NetworkIcon({ size, padding = 1 }: { size: number; padding?: number }) {
+import NetworkTooltip from "./network-tooltip";
+import { SetupTooltip } from "./tooltip";
+
+export default function NetworkIcon({
+    size,
+    padding = 1,
+    onlyIcon = false,
+    currentPopup = null,
+    iconSize = 64,
+}: {
+    size: number;
+    padding?: number;
+    onlyIcon?: boolean;
+    currentPopup?: Variable<string> | null;
+    iconSize?: 64 | 16 | 22 | 24 | 32 | 256;
+}) {
     const network = Network.get_default();
     const iconName = Variable("network-disconnected-symbolic");
     const getIcon = () => {
@@ -23,6 +36,7 @@ export default function NetworkIcon({ size, padding = 1 }: { size: number; paddi
     };
     network.connect("notify", () => getIcon());
     getIcon();
+
     return (
         <box
             css={`
@@ -35,11 +49,15 @@ export default function NetworkIcon({ size, padding = 1 }: { size: number; paddi
                 halign={Gtk.Align.CENTER}
                 valign={Gtk.Align.CENTER}
                 useCssColor={false}
-                iconSize={64}
+                iconSize={iconSize}
                 iconName={iconName()}
                 size={size - padding * 2}
                 padding={0}
-                setup={(self) => setHoverClassName(self, "Icon")}
+                setup={(self) => {
+                    setHoverClassName(self, "Icon");
+                    if (onlyIcon) return;
+                    SetupTooltip(self, NetworkTooltip, "network-tooltip", "bottom", currentPopup);
+                }}
             />
         </box>
     );

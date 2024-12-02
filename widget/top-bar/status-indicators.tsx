@@ -15,7 +15,7 @@ export default function StatusIndicators({ size }: { size: number }) {
             >
                 <VolumeIcon size={size - size / 6} currentPopup={currentPopup} />
                 <BrightnessIcon size={size - size / 6} currentPopup={currentPopup} />
-                <NetworkIcon size={size - size / 6} />
+                <NetworkIcon size={size - size / 6} currentPopup={currentPopup} />
             </box>
         </eventbox>
     );

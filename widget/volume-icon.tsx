@@ -1,9 +1,10 @@
-import { AstalIO, bind, timeout, Variable } from "astal";
+import { bind, Variable } from "astal";
 import { setHoverClassName } from "../utils";
-import { EventIcon, Space } from "./base";
+import { EventIcon } from "./base";
 import WirePlumber from "gi://AstalWp";
 import { Astal, Gtk } from "astal/gtk3";
 import VolumeTooltip from "./volume-tooltip";
+import { SetupTooltip } from "./tooltip";
 export default function VolumeIcon({
     size,
     padding = 2,
@@ -26,8 +27,6 @@ export default function VolumeIcon({
             />
         );
     const wp = WirePlumber.get_default() as WirePlumber.Wp;
-    const popupName = "volume-tooltip";
-    let popup: Astal.Window | null = null;
     const setVolume = (v: number) => {
         wp.defaultSpeaker.volume = v;
         if (wp.defaultSpeaker.volume == 0) wp.defaultSpeaker.mute = true;
@@ -37,29 +36,6 @@ export default function VolumeIcon({
         let v = wp.defaultSpeaker.volume + 0.01 * (delta_y < 0 ? 1.0 : -1.0);
         setVolume(Math.min(Math.max(v, 0), 1));
     };
-    let closeTimer: AstalIO.Time | null = null;
-    const closePopup = () => {
-        if (popup === null) return;
-        if (closeTimer) closeTimer.cancel();
-        closeTimer = timeout(500, () => {
-            if (onHover) return;
-            popup?.close();
-            popup = null;
-        });
-    };
-    const makePopup = (t: Gtk.Widget) => {
-        if (currentPopup) currentPopup.set(popupName);
-        return VolumeTooltip({
-            forward: "bottom",
-            trigger: t,
-            onHover: () => (onHover = true),
-            onHoverLost: () => {
-                onHover = false;
-                closePopup();
-            },
-        });
-    };
-    let onHover = false;
     return (
         <box
             css={`
@@ -76,20 +52,7 @@ export default function VolumeIcon({
                 setup={(self) => {
                     setHoverClassName(self, "Icon");
                     if (onlyIcon) return;
-                    self.connect("hover", () => {
-                        onHover = true;
-                        if (!popup) popup = makePopup(self);
-                    });
-                    self.connect("hover-lost", () => {
-                        onHover = false;
-                        closePopup();
-                    });
-                    if (currentPopup) {
-                        self.hook(bind(currentPopup), () => {
-                            popup?.close();
-                            popup = null;
-                        });
-                    }
+                    SetupTooltip(self, VolumeTooltip, "volume-tooltip", "bottom", currentPopup);
                 }}
                 iconName={bind(wp.defaultSpeaker, "volumeIcon")}
                 size={size - padding * 2}
