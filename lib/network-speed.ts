@@ -28,8 +28,8 @@ class NetworkSpeed extends GObject.Object {
         if (this.bytes.has(iface)) {
             const bytes = this.bytes.get(iface)!;
             return {
-                download: formatBytes(bytes.download),
-                upload: formatBytes(bytes.upload),
+                download: formatBytes(bytes.download).join(" ") + "B",
+                upload: formatBytes(bytes.upload).join(" ") + "B",
             };
         }
         return {
@@ -97,8 +97,8 @@ class NetworkSpeed extends GObject.Object {
             }
         }
         this.speed = {
-            download: formatBytes(totalRxBytes) + "/s",
-            upload: formatBytes(totalTxBytes) + "/s",
+            download: formatBytes(totalRxBytes).join(" ") + "B/s",
+            upload: formatBytes(totalTxBytes).join(" ") + "B/s",
         };
         if (this.iface.length !== ifaceList.length) {
             this.iface = ifaceList;

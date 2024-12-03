@@ -1,35 +1,37 @@
 import { exec, execAsync, Gio, GLib } from "astal";
 import { EventBox } from "astal/gtk3/widget";
 import { Slurp as slurpConfig } from "./configs";
-import { Gdk } from "astal/gtk3";
-function sleep(ms: number): Promise<void> {
+import { Gdk, Gtk } from "astal/gtk3";
+export function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
-function setHoverClassName(widget: EventBox, className: string = "") {
+export function setHoverClassName(widget: EventBox, className: string = "") {
     if (className === "") className = widget.className;
     widget.className = className;
     widget.connect("hover", () => (widget.className = className + "-hover"));
     widget.connect("hover-lost", () => (widget.className = className));
 }
 
-function formatBytes(bytes: number): string {
-    function formatValue(value: number): string {
-        // 判断是否需要保留小数位
-        return value % 1 === 0 ? `${value}` : `${value.toFixed(2)}`;
-    }
-
-    if (bytes >= 800 * 1024 * 1024) {
-        // 超过 800 MB，显示为 GB
-        return `${formatValue(bytes / 1e9)} GB`;
-    } else if (bytes >= 800 * 1024) {
-        // 超过 800 KB，但未达到 800 MB，显示为 MB
-        return `${formatValue(bytes / 1e6)} MB`;
+export function formatBytes(bytes: number, fixed: number = 2): [number, string] {
+    const KB = 1024;
+    const MB = KB * 1024;
+    const GB = MB * 1024;
+    let value: number;
+    let unit: string;
+    if (bytes >= GB * 0.8) {
+        value = bytes / GB;
+        unit = "G";
+    } else if (bytes >= MB * 0.8) {
+        value = bytes / MB;
+        unit = "M";
     } else {
-        // 小于 800 KB，显示为 KB
-        return `${formatValue(bytes / 1024)} KB`;
+        value = bytes / KB;
+        unit = "K";
     }
+    value = parseFloat(value.toFixed(fixed));
+    return [value, unit];
 }
-function formatDuration(seconds: number) {
+export function formatDuration(seconds: number) {
     if (typeof seconds !== "number" || seconds < 0) {
         throw new Error("Input must be a non-negative number.");
     }
@@ -47,7 +49,7 @@ function formatDuration(seconds: number) {
         return `${seconds.toFixed(0)}s`;
     }
 }
-function notifySend(
+export function notifySend(
     summary: string,
     body: string,
     options?: Partial<{
@@ -81,7 +83,7 @@ function notifySend(
     cmd.push('"' + summary + '"', '"' + body + '"');
     execAsync(cmd).catch((e) => print("通知发送失败", e));
 }
-function slurp(
+export function slurp(
     args?: Partial<{
         dimensions: boolean;
         backgroundColor: string;
@@ -120,7 +122,7 @@ function slurp(
         return ["", e as Error];
     }
 }
-function slurpRect(
+export function slurpRect(
     args?: Partial<{
         dimensions: boolean;
         backgroundColor: string;
@@ -141,12 +143,12 @@ function slurpRect(
     const [width, height] = region[1].split("x").map(Number);
     return [new Gdk.Rectangle({ x, y, width, height }), null];
 }
-function rectToString(rect: Gdk.Rectangle): string {
+export function rectToString(rect: Gdk.Rectangle): string {
     return `${rect.x},${rect.y} ${rect.width}x${rect.height}`;
 }
 
 // TODO: 测试 Gio.InputStream | GLib.Bytes
-function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string | null = null) {
+export function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string | null = null) {
     const cmd = ["wl-copy"];
     if (mime) cmd.push("-t", mime);
     if (typeof body === "string") cmd.push(body);
@@ -181,7 +183,7 @@ function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string | null
 //   -c              Include cursors in the screenshot.
 function grim<T extends string | Gio.OutputStream>() {}
 
-function getHyprloandOption(option: string, type: "custom" | "int"): string | null {
+export function getHyprloandOption(option: string, type: "custom" | "int"): string | null {
     const opt: {
         option: string;
         set: boolean;
@@ -189,15 +191,12 @@ function getHyprloandOption(option: string, type: "custom" | "int"): string | nu
     if (!opt.set) return null;
     return (opt as any)[type];
 }
-export {
-    sleep,
-    setHoverClassName,
-    formatBytes,
-    formatDuration,
-    slurp,
-    slurpRect,
-    notifySend,
-    rectToString,
-    wlCopy,
-    getHyprloandOption,
-};
+export function lookUpIcon(
+    name: string,
+    size: 16 | 22 | 24 | 32 | 64 | 256,
+    flags: Gtk.IconLookupFlags = 0
+) {
+    const icon = Gtk.IconTheme.get_default().lookup_icon(name, size, flags);
+    if (icon) return icon.load_icon();
+    return null;
+}

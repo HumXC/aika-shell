@@ -9,6 +9,7 @@ export default function PopupWindow({
     keymode = Astal.Keymode.NONE,
     child,
     closing,
+    namespace = "popup-window",
     ...children
 }: {
     trigger: Gtk.Widget;
@@ -17,6 +18,7 @@ export default function PopupWindow({
     child?: BindableChild;
     children?: Array<BindableChild>;
     closing?: (self: Astal.Window) => boolean;
+    namespace?: string;
 }) {
     const hypr = Hyprland.get_default();
     const gapsOption = getHyprloandOption("general:gaps_out", "custom");
@@ -72,7 +74,9 @@ export default function PopupWindow({
         }
         GtkLayerShell.set_anchor(self, anchors[0], true);
         GtkLayerShell.set_anchor(self, anchors[1], true);
+        if (offset < 0) offset = 0;
         GtkLayerShell.set_margin(self, anchors[2], offset);
+        GtkLayerShell.set_namespace(self, namespace);
     };
 
     return (

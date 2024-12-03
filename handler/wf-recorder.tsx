@@ -23,7 +23,7 @@ function StartRecording() {
 function StopRecording() {
     const wf = WFRecorder.get_default();
     wf.stop();
-    const size = formatBytes(Number.parseInt(exec("stat -c%s " + wf.file)));
+    const size = formatBytes(Number.parseInt(exec("stat -c%s " + wf.file))).join(" ") + "B";
     notifySend("Recording finished.", `${wf.duration} | ${size}`, {
         icon: "record-screen-symbolic",
         appName: "Recoder",

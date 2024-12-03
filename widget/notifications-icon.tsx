@@ -7,7 +7,7 @@ import { GetConfig, SaveConfig } from "../configs";
 import { SetupTooltip } from "./tooltip";
 import NotificationTooltip from "./notification-tooltip";
 export class Cfg {
-    isDontDisturb: boolean = false;
+    dontDisturb: boolean = false;
 }
 export default function NotificationsIcon({
     size,
@@ -49,7 +49,7 @@ export default function NotificationsIcon({
                 iconName.set("notifications-symbolic");
         }
     };
-    notifd.set_dont_disturb(config.isDontDisturb);
+    notifd.set_dont_disturb(config.dontDisturb);
     setIcon();
     return (
         <box
@@ -62,7 +62,7 @@ export default function NotificationsIcon({
                 self.hook(bind(notifd, "notifications"), () => setIcon());
                 self.hook(bind(notifd, "dontDisturb"), () => {
                     setIcon();
-                    config.isDontDisturb = notifd.dontDisturb;
+                    config.dontDisturb = notifd.dontDisturb;
                     SaveConfig();
                 });
             }}

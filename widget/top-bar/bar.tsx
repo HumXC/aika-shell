@@ -2,12 +2,13 @@ import { App, Astal, Gtk, Gdk } from "astal/gtk3";
 import Tray from "./tray";
 import Clock from "./clock";
 import NetSpeed from "./net-speed";
-import { EventIcon, Space } from "../base";
+import { Space } from "../base";
 import StatusIndicators from "./status-indicators";
 import Workspace from "./workspace";
 import NotificationsIcon from "../notifications-icon";
 import { RecorderIcon } from "../recorder-icon";
 import { exec, Variable } from "astal";
+import SystemIcon from "../system-icon";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     const gapsOption: {
         option: string;
@@ -40,7 +41,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
                 `}
             >
                 <Space space={2} />
-                <EventIcon iconName="nix-snowflake-colours" size={30} padding={6} />
+                <SystemIcon size={30} padding={6} currentPopup={currentPopup} />
                 <Space space={4} />
                 <centerbox>
                     <overlay
