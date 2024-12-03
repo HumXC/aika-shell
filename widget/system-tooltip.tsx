@@ -206,7 +206,6 @@ export default function SystemTooltip({
                 <box
                     className={"SystemTooltip"}
                     vertical={true}
-                    widthRequest={450}
                     hexpand={true}
                     marginTop={30}
                     marginBottom={30}
@@ -216,7 +215,7 @@ export default function SystemTooltip({
                     halign={Gtk.Align.FILL}
                 >
                     <box halign={Gtk.Align.CENTER} valign={Gtk.Align.BASELINE}>
-                        <SystemIcon size={98} onlyIcon={true} />
+                        <SystemIcon size={86} onlyIcon={true} />
                         <label
                             label={GLib.get_host_name() + " "}
                             css={`
@@ -230,9 +229,9 @@ export default function SystemTooltip({
                     <box
                         vertical={true}
                         halign={Gtk.Align.FILL}
-                        marginStart={40}
-                        marginEnd={40}
-                        css={"padding-right: 16px;"}
+                        marginStart={10}
+                        marginEnd={10}
+                        widthRequest={250}
                     >
                         <CPU name={config.cpuName} />
                         <Memory />
