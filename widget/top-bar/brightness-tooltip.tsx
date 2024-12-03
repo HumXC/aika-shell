@@ -1,8 +1,8 @@
 import { Astal, Gdk, Gtk } from "astal/gtk3";
-import PopupWindow from "./base/popup-window";
+import PopupWindow from "../base/popup-window";
 import { bind } from "astal";
 import BrightnessIcon from "./brightness-icon";
-import DDCBrightness from "../lib/ddc-brightness";
+import DDCBrightness from "../../lib/ddc-brightness";
 export default function BrightnessTooltip({
     forward,
     trigger,

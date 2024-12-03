@@ -1,9 +1,9 @@
 import { Astal, Gtk, Widget } from "astal/gtk3";
-import PopupWindow from "./base/popup-window";
-import { bind, timeout } from "astal";
-import { EventIcon, Space } from "./base";
+import PopupWindow from "../base/popup-window";
+import { bind } from "astal";
+import { EventIcon, Space } from "../base";
 import Notifd from "gi://AstalNotifd";
-import { setHoverClassName } from "../utils";
+import { setHoverClassName } from "../../utils";
 
 export default function NotificationTooltip({
     forward,

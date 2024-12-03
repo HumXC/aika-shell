@@ -1,10 +1,10 @@
 import { bind, Variable } from "astal";
-import { setHoverClassName } from "../utils";
-import { EventIcon } from "./base";
+import { setHoverClassName } from "../../utils";
+import { EventIcon } from "../base";
 import Notifd from "gi://AstalNotifd";
 import { Gdk, Gtk } from "astal/gtk3";
-import { GetConfig, SaveConfig } from "../configs";
-import { SetupTooltip } from "./tooltip";
+import { GetConfig, SaveConfig } from "../../configs";
+import { SetupTooltip } from "../tooltip";
 import NotificationTooltip from "./notification-tooltip";
 export class Cfg {
     dontDisturb: boolean = false;

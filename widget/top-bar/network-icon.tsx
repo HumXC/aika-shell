@@ -1,10 +1,10 @@
 import { Variable } from "astal";
 import Network from "gi://AstalNetwork";
-import { EventIcon } from "./base";
-import { setHoverClassName } from "../utils";
+import { EventIcon } from "../base";
+import { setHoverClassName } from "../../utils";
 import { Gtk } from "astal/gtk3";
 import NetworkTooltip from "./network-tooltip";
-import { SetupTooltip } from "./tooltip";
+import { SetupTooltip } from "../tooltip";
 
 export default function NetworkIcon({
     size,

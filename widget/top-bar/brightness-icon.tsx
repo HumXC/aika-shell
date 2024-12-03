@@ -1,10 +1,10 @@
 import { bind, Variable } from "astal";
-import DDCBrightness from "../lib/ddc-brightness";
-import { EventIcon } from "./base";
-import { setHoverClassName } from "../utils";
-import { GetConfig, SaveConfig, MapConfig } from "../configs";
+import DDCBrightness from "../../lib/ddc-brightness";
+import { EventIcon } from "../base";
+import { setHoverClassName } from "../../utils";
+import { GetConfig, SaveConfig, MapConfig } from "../../configs";
 import BrightnessTooltip from "./brightness-tooltip";
-import { SetupTooltip } from "./tooltip";
+import { SetupTooltip } from "../tooltip";
 
 export default function BrightnessIcon({
     size,

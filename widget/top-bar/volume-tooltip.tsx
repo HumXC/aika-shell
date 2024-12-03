@@ -1,5 +1,5 @@
 import { Astal, Gdk, Gtk } from "astal/gtk3";
-import PopupWindow from "./base/popup-window";
+import PopupWindow from "../base/popup-window";
 import WirePlumber from "gi://AstalWp";
 import { bind } from "astal";
 import VolumeIcon from "./volume-icon";

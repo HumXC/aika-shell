@@ -5,10 +5,10 @@ import NetSpeed from "./net-speed";
 import { Space } from "../base";
 import StatusIndicators from "./status-indicators";
 import Workspace from "./workspace";
-import NotificationsIcon from "../notifications-icon";
-import { RecorderIcon } from "../recorder-icon";
+import NotificationsIcon from "./notifications-icon";
+import { RecorderIcon } from "./recorder-icon";
 import { exec, Variable } from "astal";
-import SystemIcon from "../system-icon";
+import SystemIcon from "./system-icon";
 export default function Bar(gdkmonitor: Gdk.Monitor) {
     const gapsOption: {
         option: string;

@@ -1,10 +1,10 @@
 import { Astal, Gtk, Widget } from "astal/gtk3";
-import PopupWindow from "./base/popup-window";
+import PopupWindow from "../base/popup-window";
 import SystemIcon from "./system-icon";
 import { bind, Binding, exec, execAsync, GLib, interval, Variable } from "astal";
-import { Space } from "./base";
-import { GetConfig } from "../configs";
-import { formatBytes } from "../utils";
+import { Space } from "../base";
+import { GetConfig } from "../../configs";
+import { formatBytes } from "../../utils";
 class Cfg {
     disks: Array<{ dev: string; name: string }> = [{ dev: "/dev/sda1", name: "sda1" }];
     cpuName: string = "CPU";

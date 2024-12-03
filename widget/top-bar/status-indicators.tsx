@@ -1,7 +1,7 @@
 import { setHoverClassName } from "../../utils";
-import BrightnessIcon from "../brightness-icon";
-import NetworkIcon from "../network-icon";
-import VolumeIcon from "../volume-icon";
+import BrightnessIcon from "./brightness-icon";
+import NetworkIcon from "./network-icon";
+import VolumeIcon from "./volume-icon";
 import { Variable } from "astal";
 export default function StatusIndicators({
     size,

@@ -1,10 +1,10 @@
 import { bind, Variable } from "astal";
-import { setHoverClassName } from "../utils";
-import { EventIcon } from "./base";
+import { setHoverClassName } from "../../utils";
+import { EventIcon } from "../base";
 import WirePlumber from "gi://AstalWp";
 import { Astal, Gtk } from "astal/gtk3";
 import VolumeTooltip from "./volume-tooltip";
-import { SetupTooltip } from "./tooltip";
+import { SetupTooltip } from "../tooltip";
 export default function VolumeIcon({
     size,
     padding = 2,

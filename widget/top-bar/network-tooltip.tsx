@@ -1,9 +1,9 @@
 import { Astal, Gtk } from "astal/gtk3";
-import PopupWindow from "./base/popup-window";
+import PopupWindow from "../base/popup-window";
 import { Variable } from "astal";
 import Network from "gi://AstalNetwork";
 import NetworkIcon from "./network-icon";
-import { Space } from "./base";
+import { Space } from "../base";
 
 export default function NetworkTooltip({
     forward,

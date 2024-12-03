@@ -1,6 +1,6 @@
 import { Variable } from "astal";
-import { EventIcon } from "./base";
-import { SetupTooltip } from "./tooltip";
+import { EventIcon } from "../base";
+import { SetupTooltip } from "../tooltip";
 import SystemTooltip from "./system-tooltip";
 
 export default function SystemIcon({
