@@ -38,7 +38,7 @@ function LevelBar({
                     `}
                 />
             </box>
-            <box vertical={true} hexpand={true} valign={Gtk.Align.END}>
+            <box vertical={true} hexpand={true} valign={Gtk.Align.END} widthRequest={200}>
                 <box halign={Gtk.Align.FILL}>
                     <label
                         label={label1}
@@ -61,13 +61,14 @@ function LevelBar({
             </box>
             <Space space={10} />
             <label
-                widthRequest={30}
+                widthRequest={40}
                 valign={Gtk.Align.END}
                 xalign={1}
                 label={label3}
                 css={`
                     font-size: 16px;
                     margin-bottom: 10px;
+                    margin-right: 10px;
                 `}
             />
         </box>

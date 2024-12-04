@@ -169,19 +169,47 @@ export function wlCopy(body: string | Gio.InputStream | GLib.Bytes, mime: string
     }
 }
 
-// TODO: 实现 grim 命令
-// Usage: grim [options...] [output-file]
+export function grim<T extends string | Gio.OutputStream>(
+    output: T,
+    args?: Partial<{
+        factor: number;
+        geometry: string | Gdk.Rectangle;
+        filetype: "png" | "ppm" | "jpeg";
+        quality: number;
+        compression: number;
+        monitor: string;
+        includeCursor: boolean;
+    }>
+) {
+    const cmd = ["grim"];
+    if (args?.factor) cmd.push("-s", args.factor.toString());
+    if (args?.geometry) {
+        if (typeof args.geometry === "string") cmd.push("-g", args.geometry);
+        else cmd.push("-g", rectToString(args.geometry));
+    }
+    if (args?.filetype) cmd.push("-t", args.filetype);
+    if (args?.quality) cmd.push("-q", args.quality.toString());
+    if (args?.compression) cmd.push("-l", args.compression.toString());
+    if (args?.monitor) cmd.push("-m", args.monitor);
+    if (args?.includeCursor) cmd.push("-c");
+    if (typeof output === "string") cmd.push(output);
 
-//   -h              Show help message and quit.
-//   -s <factor>     Set the output image scale factor. Defaults to the
-//                   greatest output scale factor.
-//   -g <geometry>   Set the region to capture.
-//   -t png|ppm|jpeg Set the output filetype. Defaults to png.
-//   -q <quality>    Set the JPEG filetype quality 0-100. Defaults to 80.
-//   -l <level>      Set the PNG filetype compression level 0-9. Defaults to 6.
-//   -o <output>     Set the output name to capture.
-//   -c              Include cursors in the screenshot.
-function grim<T extends string | Gio.OutputStream>() {}
+    const proc = Gio.Subprocess.new(cmd, Gio.SubprocessFlags.STDOUT_PIPE);
+
+    if (typeof output === "string") {
+        const [_, __, error] = proc.communicate(null, null);
+        if (error) throw Error(new TextDecoder("utf-8").decode(error.toArray()));
+    } else {
+        const stdout = proc.get_stdout_pipe()!;
+        let length = 0.1; // 用于进入循环
+        while (length > 0) {
+            const [l, b] = stdout.read(null);
+            length = l;
+            if (l > 0) output.write(b, null);
+        }
+        output.close();
+    }
+}
 
 export function getHyprloandOption(option: string, type: "custom" | "int"): string | null {
     const opt: {

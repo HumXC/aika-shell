@@ -1,23 +1,129 @@
-import { Gdk, Gtk } from "astal/gtk3";
-import { EventIcon, RegularWindow } from "./base";
-import { exec, Gio, idle } from "astal";
+import { Gdk, Gtk, Widget } from "astal/gtk3";
+import { RegularWindow } from "./base";
+import { exec, execAsync, idle, Variable } from "astal";
 import Hyprland from "gi://AstalHyprland";
 import { getHyprloandOption, sleep } from "../utils";
-import GdkPixbuf from "gi://GdkPixbuf?version=2.0";
+import Pango from "gi://Pango?version=1.0";
+class Entry {
+    type: string = "text";
+    text: string = "*Unknown*";
+    icon: Widget.Icon | null = null;
+    index: string = "";
+    constructor(payload: string) {
+        const i = payload.indexOf("\t");
+        this.index = payload.slice(0, i);
+        payload = payload.slice(i + 1, payload.length);
+        const icon = (name: string) => {
+            return (
+                <icon
+                    marginEnd={10}
+                    css={`
+                        font-size: 40px;
+                    `}
+                    icon={name}
+                />
+            ) as Widget.Icon;
+        };
+        if (payload.startsWith("[[")) {
+            const split = payload.split(" ");
+            if (split.length === 8) {
+                const type = split[1] + " " + split[2];
+                const size = split[3] + " " + split[4];
+                const ext = split[5];
+                const date = split[6];
+                this.type = "file";
+                this.icon = icon("document-preview");
+                this.text = `Binary ( ${type}, ${size}, ${date})`;
+
+                if (["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp"].includes(ext)) {
+                    this.type = "image";
+                    this.text = `Image ( ${size}, ${date})`;
+                    this.icon = icon("view-preview");
+                }
+            }
+        } else if (payload.startsWith("file://")) {
+            this.type = "file";
+            this.icon = icon("document-preview");
+            this.text = payload.slice(7, payload.length);
+        } else {
+            this.text = payload;
+        }
+    }
+}
+function EntryBox(entry: Entry) {
+    return (
+        <eventbox
+            onHover={(self) => {
+                (self.parent as Gtk.ListBoxRow).grab_focus();
+            }}
+        >
+            <box className={"ClipboardEntry"} heightRequest={50} margin={10}>
+                {entry.icon}
+                <label label={entry.text} wrap={true} wrapMode={Pango.WrapMode.CHAR} />
+            </box>
+        </eventbox>
+    );
+}
 export default function Clipboard() {
     const hypr = Hyprland.get_default();
     let init = false;
     const title = "clipboard";
+    const currentFilter = Variable("");
+    let scrolledWindow: Gtk.ScrolledWindow = null as any;
+    let listBox: Gtk.ListBox = null as any;
+    let entry: Gtk.Entry = null as any;
+    const lines = exec("cliphist list").split("\n");
+    const addEntry = (start: number, count: number = 10) => {
+        for (let i = start; i < start + count; i++) {
+            if (i >= lines.length) break;
+            const entry = new Entry(lines[i]);
+            const row = new Gtk.ListBoxRow();
+            const box = EntryBox(entry);
+            row.set_margin_top(5);
+            row.set_margin_bottom(5);
+            row.add(box);
+            row.connect("activate", () => {
+                execAsync(["sh", "-c", `cliphist decode ${entry.index} | wl-copy`]).catch((e) =>
+                    console.error(e)
+                );
+                (scrolledWindow.parent.parent as Widget.Window).close();
+            });
+            row.show_all();
+            listBox.add(row);
+        }
+    };
     return (
         <RegularWindow
             title={title}
-            className={"Ｃlipboard"}
             decorated={false}
             onKeyPressEvent={(self, e) => {
                 if (e.get_keyval()[1] === Gdk.KEY_Escape) {
                     self.close();
                 }
+                if (
+                    ![
+                        Gdk.KEY_Return,
+                        Gdk.KEY_Tab,
+                        Gdk.KEY_space,
+                        Gdk.KEY_Left,
+                        Gdk.KEY_Right,
+                        Gdk.KEY_Up,
+                        Gdk.KEY_Down,
+                        Gdk.KEY_Page_Up,
+                        Gdk.KEY_Page_Down,
+                        Gdk.KEY_Home,
+                        Gdk.KEY_End,
+                    ].includes(e.get_keyval()[1]) &&
+                    !entry.isFocus
+                ) {
+                    entry.grab_focus();
+                    entry.select_region(-1, -1);
+                }
             }}
+            setup={(self) => self.set_focus(listBox.get_row_at_index(0))}
+            css={"background: transparent;"}
+            heightRequest={500}
+            widthRequest={320}
             onDraw={(self) => {
                 if (init) return;
                 init = true;
@@ -51,24 +157,49 @@ export default function Clipboard() {
                     hypr.dispatch("movewindowpixel", `${x} ${y},title:${title}`);
                 });
             }}
-            css={`
-                color: white;
-            `}
         >
-            <box>
-                <EventIcon useCssColor={false} iconName={"critical-notif-symbolic"} size={128} />{" "}
-                <EventIcon useCssColor={false} iconName={"critical-notif-symbolic"} size={128} />
-                <icon
-                    setup={(self) => {
-                        let theme = Gtk.IconTheme.get_default();
-                        let icon = theme.lookup_icon("critical-notif-symbolic", 128, 0);
-                        self.gIcon = icon?.load_icon()!;
+            <box
+                css={`
+                    padding: 10px;
+                `}
+                vertical={true}
+                hexpand={true}
+                className={"Clipboard"}
+            >
+                <entry
+                    onChanged={(self) => {
+                        currentFilter.set(self.get_text());
+                        listBox.invalidate_filter();
                     }}
-                    css={`
-                        font-size: 96px;
-                        color: white;
-                    `}
+                    marginBottom={20}
+                    marginTop={20}
+                    setup={(self) => (entry = self)}
                 />
+                {(() => {
+                    const scrollWindow = Gtk.ScrolledWindow.new(null, null);
+                    const list = Gtk.ListBox.new();
+                    listBox = list;
+                    scrolledWindow = scrollWindow;
+                    scrollWindow.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+                    scrollWindow.add(list);
+                    scrollWindow.set_vexpand(true);
+                    list.connect("row-selected", () => {
+                        if (list.get_selected_row() === list.get_children().pop())
+                            addEntry(list.get_children().length);
+                    });
+                    scrollWindow.connect("edge-reached", (self, pos) => {
+                        if (pos === Gtk.PositionType.BOTTOM) addEntry(list.get_children().length);
+                    });
+                    list.set_filter_func((row) => {
+                        const text = (
+                            (row as any).get_child().get_child().get_children().pop() as Gtk.Label
+                        ).get_text();
+                        return text.toLowerCase().includes(currentFilter.get().toLowerCase());
+                    });
+                    scrollWindow.show_all();
+                    addEntry(0);
+                    return scrollWindow;
+                })()}
             </box>
         </RegularWindow>
     );

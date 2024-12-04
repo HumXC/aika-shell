@@ -120,3 +120,17 @@ box.NotificationTooltip {
         color: rgba(255, 44, 44, 0.68);
     }
 }
+box.Clipboard {
+    background: rgba(0, 0, 0, 0.8);
+    > entry {
+        background: rgba(255, 255, 255, 0.149);
+        border-radius: 8px;
+    }
+    > scrolledwindow > viewport > list {
+        background: transparent;
+        > row {
+            background: rgba(255, 255, 255, 0.149);
+            border-radius: 8px;
+        }
+    }
+}

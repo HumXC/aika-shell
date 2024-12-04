@@ -40,7 +40,8 @@ export default function NetworkIcon({
     return (
         <box
             css={`
-                padding: 3px ${padding}px 0 ${padding}px;
+                padding: ${iconName.get() === "network-wired-symbolic" ? 3 : 0}px ${padding}px 0
+                    ${padding}px;
             `}
             halign={Gtk.Align.CENTER}
             valign={Gtk.Align.CENTER}
