@@ -42,6 +42,13 @@ function GetAny(key: string): any {
     return Get(AnyClass, key);
 }
 export class MapConfig<T> extends Map<string, T> {
+    constructor(defaultValue?: { [key: string]: T }) {
+        super();
+        if (!defaultValue) return;
+        for (let key in defaultValue) {
+            this.set(key, defaultValue[key]);
+        }
+    }
     toJSON() {
         let obj: any = {};
         for (let [key, value] of this) {

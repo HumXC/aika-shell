@@ -14,6 +14,8 @@ Register("recorder", Recorder);
 Register("clipboard", Clipboard);
 Register("powermenu", Powermenu);
 Register("lockscreen", ScreenLock);
+import Wallpaper from "./lib/wallpaper";
+Wallpaper.get_default();
 App.start({
     requestHandler: (request, res) => Handle(request, res),
     css: style,
