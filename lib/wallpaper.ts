@@ -1,14 +1,14 @@
-import { GetConfig, MapConfig, SaveConfig } from "../configs";
-import { AstalIO, exec, execAsync, interval } from "astal";
-import { GObject, register, property, GLib, signal } from "astal/gobject";
-import { Gtk } from "astal/gtk3";
+import { GetConfig } from "../configs";
+import { exec, execAsync, interval, timeout } from "astal";
+import { GObject, register, GLib } from "astal/gobject";
 
-type TriggerType = "onTime" | "interval";
+type TriggerType = "interval" | "once";
 type Rule = Partial<{
     outputs: Array<string>;
     trigger: TriggerType;
     intervalMS: number;
     picker: "random" | "forward" | "backward";
+    time: string;
     name: string;
     transitions: Array<string>;
     folder: Array<string>;
@@ -77,8 +77,8 @@ class Config {
     _folders_comment: string = "{name: string, dir:string, recursive:boolean}";
     folders: Array<Folder> = [
         {
-            name: "default",
-            folder: `${GLib.get_home_dir()}/Pictures/Wallpapers`,
+            name: "example",
+            folder: `${GLib.get_home_dir()}/Pictures/Wallpaper`,
             recursive: true,
         },
     ];
@@ -99,8 +99,8 @@ class Config {
             intervalMS: 10000,
             name: "default",
             picker: "random",
-            folder: ["default"],
-            priority: 0,
+            folder: ["example"],
+            priority: 10,
         },
     ];
 }
@@ -156,56 +156,189 @@ function listDirs(folders: Array<Folder>): Array<string> {
         if (!folder.recursive) cmd.push("-maxdepth", "1");
         cmd.push("-type", "f");
         cmd.push(...allowedImage);
-        const a = exec(cmd).split("\n");
-        files.push(...a);
+        files.push(...exec(cmd).split("\n"));
     }
     return files;
 }
+function pickerRandom(
+    self: Trigger,
+    wallpaper: Wallpaper,
+    onTrigger?: (self: Trigger) => void | false
+) {
+    let transitionIndex = -1;
+    return () => {
+        if (onTrigger && onTrigger(self) === false) return;
+        const files = listDirs(config.folders.filter((f) => self.rule.folder!.includes(f.name)));
+        if (files.length === 0) return;
+        const file = files[Math.floor(Math.random() * files.length)];
+        transitionIndex++;
+        transitionIndex %= self.transitions.length;
+        const tr = self.transitions[transitionIndex];
+        wallpaper.setWallpaper(file, self.rule.outputs, tr);
+    };
+}
+function pickerForward(
+    self: Trigger,
+    wallpaper: Wallpaper,
+    onTrigger?: (self: Trigger) => void | false
+) {
+    let index = -1;
+    let transitionIndex = -1;
+    return () => {
+        if (onTrigger && onTrigger(self) === false) return;
+        const files = listDirs(config.folders.filter((f) => self.rule.folder!.includes(f.name)));
+        if (files.length === 0) return;
+        index++;
+        index %= files.length;
+        const file = files[index];
+        transitionIndex++;
+        transitionIndex %= self.transitions.length;
+        const tr = self.transitions[transitionIndex];
+        wallpaper.setWallpaper(file, self.rule.outputs, tr);
+    };
+}
+
+function pickerBackward(
+    self: Trigger,
+    wallpaper: Wallpaper,
+    onTrigger?: (self: Trigger) => void | false
+) {
+    let index = -1;
+    let transitionIndex = -1;
+    return () => {
+        if (onTrigger && onTrigger(self) === false) return;
+        const files = listDirs(config.folders.filter((f) => self.rule.folder!.includes(f.name)));
+        if (files.length === 0) return;
+        index++;
+        index %= files.length;
+        const file = files[files.length - 1 - index];
+        transitionIndex++;
+        transitionIndex %= self.transitions.length;
+        const tr = self.transitions[transitionIndex];
+        wallpaper.setWallpaper(file, self.rule.outputs, tr);
+    };
+}
 class Trigger {
+    activated: boolean = false;
     rule: Rule;
     transitions: Array<Transition>;
-    transitionIndex: number = 0;
-    private timer: AstalIO.Time;
+    do: () => void;
+    private wallpaper: Wallpaper;
     constructor(wallpaper: Wallpaper, rule: Rule, onTrigger?: (self: Trigger) => void | false) {
         if (!rule.folder || rule.folder?.length === 0)
             throw new Error("Wallpaper rule is invalid, no folders specified");
         this.rule = rule;
         this.transitions = config.transitions.filter((t) => rule.transitions?.includes(t.name!));
-        switch (rule.trigger) {
-            case "interval":
-                if (!rule.intervalMS) throw new Error("Wallpaper rule is invalid interval trigger");
-                this.timer = interval(rule.intervalMS, () => {
-                    if (onTrigger && onTrigger(this) === false) return;
-                    switch (rule.picker) {
-                        case "random":
-                            const files = listDirs(
-                                config.folders.filter((f) => rule.folder!.includes(f.name))
-                            );
-                            if (files.length === 0) return;
-                            const file = files[Math.floor(Math.random() * files.length)];
-                            const tr =
-                                this.transitions[this.transitionIndex % this.transitions.length];
-                            this.transitionIndex++;
-                            wallpaper.setWallpaper(file, rule.outputs, tr);
-                            break;
-
-                        default:
-                            break;
-                    }
-                });
+        this.wallpaper = wallpaper;
+        switch (rule.picker) {
+            case "random":
+                this.do = pickerRandom(this, wallpaper, onTrigger);
                 break;
-
+            case "forward":
+                this.do = pickerForward(this, wallpaper, onTrigger);
+                break;
+            case "backward":
+                this.do = pickerBackward(this, wallpaper, onTrigger);
+                break;
             default:
                 throw new Error("Wallpaper rule is invalid trigger");
         }
+        switch (rule.trigger) {
+            case "interval":
+                if (!rule.intervalMS) throw new Error("Wallpaper rule is invalid interval trigger");
+                break;
+            case "once":
+                break;
+            default:
+                throw new Error("Wallpaper rule is invalid trigger");
+        }
+        this.setup();
     }
-    cancel() {
-        this.timer?.cancel();
+    private setup(nextDay?: boolean) {
+        if (this.rule.time && this.rule.time != "") {
+            const [start, end] = this.rule.time.split("-");
+            const now = new Date();
+            const startDate = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                parseInt(start.split(":")[0]),
+                parseInt(start.split(":")[1])
+            );
+            if (nextDay) startDate.setDate(startDate.getDate() + 1);
+            timeout(Math.max(0, startDate.getTime() - now.getTime()), () => {
+                this.activate();
+            });
+            console.log(
+                `Wallpaper trigger [${
+                    this.rule.name
+                }] scheduled to start at ${startDate.toLocaleDateString()}`
+            );
+
+            if (end === undefined || end == "") return;
+            const endDate = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate(),
+                parseInt(end.split(":")[0]),
+                parseInt(end.split(":")[1])
+            );
+            if (nextDay) endDate.setDate(endDate.getDate() + 1);
+            timeout(Math.max(0, endDate.getTime() - now.getTime()), () => {
+                this.deactivate();
+                this.setup(true);
+            });
+            console.log(
+                `Wallpaper trigger [${
+                    this.rule.name
+                }] scheduled to start at ${startDate.toLocaleDateString()} and end at ${endDate.toLocaleDateString()}`
+            );
+        } else this.activate();
+    }
+    private canDo(): boolean {
+        return (
+            this.wallpaper.triggers.filter((t) => {
+                if (
+                    !t.rule.priority ||
+                    !t.rule.priority ||
+                    t.rule.priority === 0 ||
+                    this.rule.priority === 0
+                )
+                    return false;
+                return (
+                    t.activated &&
+                    t.rule.name != this.rule.name &&
+                    t.rule.priority! >= this.rule.priority!
+                );
+            }).length === 0
+        );
+    }
+    activate() {
+        if (this.activated) return;
+        this.activated = true;
+        console.log(`Wallpaper trigger [${this.rule.name}] activated`);
+        switch (this.rule.trigger) {
+            case "interval":
+                interval(this.rule.intervalMS!, () => {
+                    if (!this.canDo()) return;
+                    this.do();
+                });
+                break;
+            case "once":
+                if (this.canDo()) this.do();
+                break;
+            default:
+                break;
+        }
+    }
+    deactivate() {
+        if (!this.activated) return;
+        this.activated = false;
+        console.log(`Wallpaper trigger [${this.rule.name}] deactivated`);
     }
 }
 @register()
 class Wallpaper extends GObject.Object {
-    @property(String) declare rule: string;
     setWallpaper(file: string, monitors?: Array<string>, transition?: Transition) {
         let t = transition || config.transitions.find((t) => t.name === "default");
         let m = monitors?.join(",");
@@ -220,22 +353,38 @@ class Wallpaper extends GObject.Object {
             .split("\n")
             .map((line) => new SwwwQuery(line));
     }
+    get folders(): Array<Folder> {
+        return config.folders;
+    }
+    triggers: Array<Trigger> = [];
     get rules(): Array<Rule> {
         return config.rules;
     }
-
+    defaultRule: Rule;
     constructor() {
         super();
-
-        this.connect("notify::rule", () => {
-            const rule = config.rules.find((r) => r.name === this.rule);
-            if (!rule) throw new Error(`Wallpaper rule ${this.rule} not found`);
-            new Trigger(this, rule);
-        });
-        if (config.folders.length === 0 || config.rules.length === 0) return;
-        const defaultRule = config.rules.find((rule) => rule.name === "default");
-        if (!(defaultRule?.folder?.length && defaultRule?.folder?.length > 0)) return;
-        this.rule = defaultRule.name as string;
+        let defaultRule = config.rules.find((rule) => rule.name === "default");
+        if (defaultRule === undefined) {
+            if (config.folders.length === 0)
+                config.folders.push({
+                    name: "example",
+                    folder: `${GLib.get_home_dir()}/Pictures/Wallpaper`,
+                    recursive: true,
+                });
+            config.rules.push({
+                name: "default",
+                trigger: "interval",
+                intervalMS: 10000,
+                picker: "random",
+                folder: ["example"],
+                priority: 10,
+            });
+            defaultRule = config.rules.find((rule) => rule.name === "default")!;
+        }
+        this.defaultRule = defaultRule;
+        for (const rule of config.rules) {
+            this.triggers.push(new Trigger(this, rule));
+        }
     }
 }
 const defaultWallpaper = new Wallpaper();
