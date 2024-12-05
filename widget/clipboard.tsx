@@ -1,9 +1,21 @@
 import { Gdk, Gtk, Widget } from "astal/gtk3";
 import { RegularWindow } from "./base";
-import { exec, execAsync, idle, Variable } from "astal";
+import { exec, execAsync, Gio, GLib, idle, interval, timeout, Variable } from "astal";
 import Hyprland from "gi://AstalHyprland";
 import { getHyprloandOption, sleep } from "../utils";
 import Pango from "gi://Pango?version=1.0";
+
+function cliphistDecode(index: string) {
+    try {
+        const [_, out, __] = Gio.Subprocess.new(
+            ["cliphist", "decode", index],
+            Gio.SubprocessFlags.STDOUT_PIPE
+        ).communicate_utf8(null, null);
+        return out;
+    } catch (error) {
+        return "";
+    }
+}
 class Entry {
     type: string = "text";
     text: string = "*Unknown*";
@@ -54,7 +66,7 @@ function EntryBox(entry: Entry) {
     return (
         <eventbox
             onHover={(self) => {
-                (self.parent as Gtk.ListBoxRow).grab_focus();
+                (self.parent as Gtk.ListBoxRow).activate();
             }}
         >
             <box className={"ClipboardEntry"} heightRequest={50} margin={10}>
@@ -69,9 +81,9 @@ export default function Clipboard() {
     let init = false;
     const title = "clipboard";
     const currentFilter = Variable("");
-    let scrolledWindow: Gtk.ScrolledWindow = null as any;
     let listBox: Gtk.ListBox = null as any;
     let entry: Gtk.Entry = null as any;
+    const selected = Variable("");
     const lines = exec("cliphist list").split("\n");
     const addEntry = (start: number, count: number = 10) => {
         for (let i = start; i < start + count; i++) {
@@ -82,13 +94,13 @@ export default function Clipboard() {
             row.set_margin_top(5);
             row.set_margin_bottom(5);
             row.add(box);
-            row.connect("activate", () => {
-                execAsync(["sh", "-c", `cliphist decode ${entry.index} | wl-copy`]).catch((e) =>
-                    console.error(e)
-                );
-                (scrolledWindow.parent.parent as Widget.Window).close();
-            });
             row.show_all();
+            row.connect("activate", () => {
+                selected.set(entry.index);
+            });
+            row.connect("focus-in-event", () => {
+                row.activate();
+            });
             listBox.add(row);
         }
     };
@@ -113,11 +125,42 @@ export default function Clipboard() {
                         Gdk.KEY_Page_Down,
                         Gdk.KEY_Home,
                         Gdk.KEY_End,
+                        Gdk.KEY_Shift_L,
+                        Gdk.KEY_Shift_R,
+                        Gdk.KEY_Control_L,
+                        Gdk.KEY_Control_R,
+                        Gdk.KEY_Alt_L,
+                        Gdk.KEY_Alt_R,
+                        Gdk.KEY_Super_L,
+                        Gdk.KEY_Super_R,
+                        Gdk.KEY_Menu,
                     ].includes(e.get_keyval()[1]) &&
                     !entry.isFocus
                 ) {
                     entry.grab_focus();
                     entry.select_region(-1, -1);
+                }
+                if (e.get_keyval()[1] === Gdk.KEY_space) {
+                    self.close();
+                    let cmd = `cliphist decode ${selected.get()} | wl-copy`;
+                    if (cliphistDecode(selected.get()).startsWith("file://"))
+                        cmd += " -t text/uri-list";
+                    execAsync(["sh", "-c", cmd]).catch((e) => console.error(e));
+                }
+                if (e.get_keyval()[1] === Gdk.KEY_Return) {
+                    self.close();
+                    let cmd = `cliphist decode ${selected.get()} | wl-copy`;
+                    if (cliphistDecode(selected.get()).startsWith("file://"))
+                        cmd += " -t text/uri-list";
+                    GLib.timeout_add(GLib.PRIORITY_DEFAULT_IDLE, 10, () => {
+                        if (hypr.focusedClient && hypr.focusedClient.title === title) return true;
+                        Gio.Subprocess.new(["sh", "-c", cmd], Gio.SubprocessFlags.NONE).wait(null);
+                        Gio.Subprocess.new(
+                            ["wtype", "-M", "ctrl", "v", "-m", "ctrl"],
+                            Gio.SubprocessFlags.NONE
+                        ).wait(null);
+                        return false;
+                    });
                 }
             }}
             setup={(self) => self.set_focus(listBox.get_row_at_index(0))}
@@ -179,7 +222,6 @@ export default function Clipboard() {
                     const scrollWindow = Gtk.ScrolledWindow.new(null, null);
                     const list = Gtk.ListBox.new();
                     listBox = list;
-                    scrolledWindow = scrollWindow;
                     scrollWindow.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
                     scrollWindow.add(list);
                     scrollWindow.set_vexpand(true);

@@ -83,8 +83,9 @@ export function SetupPopup(
     };
     self.connect("button-press-event", (_, e: Gdk.Event) => {
         if (e.get_button()[1] !== Gdk.BUTTON_SECONDARY) return;
-        isOpen = true;
+        isOpen = !isOpen;
         if (!popup) popup = makePopup(self);
+        else currentPopup?.set("");
     });
     if (currentPopup) {
         self.hook(bind(currentPopup), () => {

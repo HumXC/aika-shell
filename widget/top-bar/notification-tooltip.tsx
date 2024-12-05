@@ -56,7 +56,7 @@ export default function NotificationTooltip({
                             return ns.length > 0;
                         })}
                     />
-                    <box spacing={8}>
+                    <box spacing={8} vertical={true}>
                         {(() => {
                             const filtered = new Map<
                                 string,

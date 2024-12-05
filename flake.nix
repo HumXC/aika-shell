@@ -26,6 +26,7 @@
             auth
             pkgs.gtk-session-lock
             pkgs.imagemagick
+            pkgs.wtype
           ];
         ags = inputs.ags.packages.${system}.default.override {
           extraPackages = extraPackages;
