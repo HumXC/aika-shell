@@ -45,10 +45,9 @@ export default function VolumeTooltip({
                     <slider
                         setup={(self) => {
                             self.value = wp.defaultSpeaker.volume * 100;
-                            self.connect("scroll-event", (_, e: Gdk.EventScroll) => {
-                                // BUG: e is not null, but it's not a valid event.
-                                // onScroll(e.delta_y);
-                            });
+                            self.connect("scroll-event", (_, e: Gdk.Event) =>
+                                onScroll(e.get_scroll_deltas()[2])
+                            );
                         }}
                         heightRequest={100}
                         halign={Gtk.Align.CENTER}

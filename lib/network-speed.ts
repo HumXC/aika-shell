@@ -74,7 +74,12 @@ class NetworkSpeed extends GObject.Object {
         return menu;
     }
     interval() {
-        const current_data = JSON.parse(exec(`ifstat -j`));
+        let current_data;
+        try {
+            current_data = JSON.parse(exec(`ifstat -j`));
+        } catch (error) {
+            return;
+        }
         if (this.prev_data === null) {
             this.prev_data = current_data;
             return;

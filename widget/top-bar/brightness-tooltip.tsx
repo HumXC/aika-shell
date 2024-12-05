@@ -35,9 +35,9 @@ export default function BrightnessTooltip({
                     <slider
                         setup={(self) => {
                             self.value = ddc.light;
-                            self.connect("scroll-event", (_, e: Gdk.EventScroll) => {
-                                // BUG: e is not null, but it's not a valid event.
-                                // onScroll(e.delta_y);
+                            self.connect("scroll-event", (_, e: Gdk.Event) => {
+                                let v = ddc.light + 5 * (e.get_scroll_deltas()[2] < 0 ? 1.0 : -1.0);
+                                ddc.light = Math.min(Math.max(v, 0), 100);
                             });
                         }}
                         heightRequest={100}

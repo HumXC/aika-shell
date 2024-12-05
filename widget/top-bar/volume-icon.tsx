@@ -4,7 +4,8 @@ import { EventIcon } from "../base";
 import WirePlumber from "gi://AstalWp";
 import { Astal, Gtk } from "astal/gtk3";
 import VolumeTooltip from "./volume-tooltip";
-import { SetupTooltip } from "../tooltip";
+import { SetupPopup, SetupTooltip } from "../tooltip";
+import VolumePopup from "./volume-popup";
 export default function VolumeIcon({
     size,
     padding = 2,
@@ -53,14 +54,15 @@ export default function VolumeIcon({
                     setHoverClassName(self, "Icon");
                     if (onlyIcon) return;
                     SetupTooltip(self, VolumeTooltip, "volume-tooltip", "bottom", currentPopup);
+                    SetupPopup(self, VolumePopup, "volume-popup", "bottom", currentPopup);
                 }}
                 iconName={bind(wp.defaultSpeaker, "volumeIcon")}
                 size={size - padding * 2}
                 padding={0}
                 onScroll={(self, e) => onScroll(e.delta_y)}
                 onClick={(self, e) => {
-                    if (e.button == Astal.MouseButton.PRIMARY) return;
-                    wp.defaultSpeaker.mute = !wp.defaultSpeaker.mute;
+                    if (e.button == Astal.MouseButton.PRIMARY)
+                        wp.defaultSpeaker.mute = !wp.defaultSpeaker.mute;
                 }}
             />
         </box>
