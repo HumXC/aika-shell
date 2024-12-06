@@ -95,7 +95,7 @@ export default function VolumePopup({
                 onHoverLost={(self, e) => onHoverLost(self.parent as Astal.Window, e)}
             >
                 <box
-                    className={"VolumePopup"}
+                    className={"BrightnessPopup"}
                     vertical={true}
                     spacing={8}
                     css={`
