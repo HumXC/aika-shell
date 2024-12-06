@@ -1,4 +1,4 @@
-import { execAsync, GObject, property, register, signal } from "astal";
+import { exec, execAsync, GObject, property, register, signal } from "astal";
 
 const icons = {
     80: "high",
@@ -46,7 +46,7 @@ class VCP {
         });
     }
 }
-class Display {
+type Display = {
     edid: {
         mfg_id: string;
         model: string;
@@ -55,61 +55,63 @@ class Display {
         serial_number: number | null;
         manufacture_year: number;
         manufacture_week: number;
-    } = {
-        mfg_id: "",
-        model: "",
-        product_code: 0,
-        serial_number: 0,
-        manufacture_year: 0,
-        manufacture_week: 0,
-        binary_serial_number: 0,
     };
-    i2c_bus: string = "";
-    drm_connector: string = "";
-    vcp_version: string = "";
-}
-class Detect {
-    display: Map<string, {}> = new Map();
-    // Command: ddcutil detect
-    constructor(detect: string) {
-        const lines = detect.trim().split("\n");
-        let currentDisplay = new Display();
-        for (const line of lines) {
-            let trimmed = line.trim();
-            if (trimmed.startsWith("Invalid display")) {
-                return;
-            }
-            if (trimmed.startsWith("Display")) {
-                currentDisplay = new Display();
-                const displayId = trimmed.split(" ")[1];
-                this.display.set(displayId, currentDisplay);
-            } else if (trimmed.startsWith("I2C bus:")) {
-                currentDisplay.i2c_bus = trimmed.split(":")[1].trim();
-            } else if (trimmed.startsWith("DRM connector:")) {
-                currentDisplay.drm_connector = trimmed.split(":")[1].trim();
-            } else if (trimmed.startsWith("Mfg id:")) {
-                currentDisplay.edid.mfg_id = trimmed.split(":")[1].trim();
-            } else if (trimmed.startsWith("Model:")) {
-                currentDisplay.edid.model = trimmed.split(":")[1].trim();
-            } else if (trimmed.startsWith("Product code:")) {
-                currentDisplay.edid.product_code = parseInt(
-                    trimmed.split(":")[1].trim().split(" ")[0]
-                );
-            } else if (trimmed.startsWith("Serial number:")) {
-                currentDisplay.edid.serial_number = parseInt(trimmed.split(":")[1].trim()) || null;
-            } else if (trimmed.startsWith("Binary serial number:")) {
-                currentDisplay.edid.binary_serial_number = parseInt(
-                    trimmed.split(":")[1].trim().split(" ")[0]
-                );
-            } else if (trimmed.startsWith("Manufacture year:")) {
-                const parts = trimmed.split(":")[1].trim().split(",  Week: ");
-                currentDisplay.edid.manufacture_year = parseInt(parts[0]);
-                currentDisplay.edid.manufacture_week = parseInt(trimmed.split(":")[2].trim());
-            } else if (trimmed.startsWith("VCP version:")) {
-                currentDisplay.vcp_version = trimmed.split(":")[1].trim();
-            }
+    i2c_bus: string;
+    drm_connector: string;
+    vcp_version: string;
+};
+
+function DetectDisplays(): Array<Display> {
+    const lines = exec(["ddcutil", "detect"]).trim().split("\n");
+    const displays: Array<Display> = [];
+    let currentDisplay: Display = null as any;
+    for (const line of lines) {
+        let trimmed = line.trim();
+        if (trimmed.startsWith("Invalid display")) {
+            continue;
+        }
+        if (trimmed.startsWith("Display")) {
+            if (currentDisplay) displays.push(currentDisplay);
+            currentDisplay = {
+                edid: {
+                    mfg_id: "",
+                    model: "",
+                    product_code: 0,
+                    binary_serial_number: null,
+                    serial_number: null,
+                    manufacture_year: 0,
+                    manufacture_week: 0,
+                },
+                i2c_bus: "",
+                drm_connector: "",
+                vcp_version: "",
+            };
+        } else if (trimmed.startsWith("I2C bus:")) {
+            currentDisplay.i2c_bus = trimmed.split(":")[1].trim();
+        } else if (trimmed.startsWith("DRM connector:")) {
+            currentDisplay.drm_connector = trimmed.split(":")[1].trim();
+        } else if (trimmed.startsWith("Mfg id:")) {
+            currentDisplay.edid.mfg_id = trimmed.split(":")[1].trim();
+        } else if (trimmed.startsWith("Model:")) {
+            currentDisplay.edid.model = trimmed.split(":")[1].trim();
+        } else if (trimmed.startsWith("Product code:")) {
+            currentDisplay.edid.product_code = parseInt(trimmed.split(":")[1].trim().split(" ")[0]);
+        } else if (trimmed.startsWith("Serial number:")) {
+            currentDisplay.edid.serial_number = parseInt(trimmed.split(":")[1].trim()) || null;
+        } else if (trimmed.startsWith("Binary serial number:")) {
+            currentDisplay.edid.binary_serial_number = parseInt(
+                trimmed.split(":")[1].trim().split(" ")[0]
+            );
+        } else if (trimmed.startsWith("Manufacture year:")) {
+            const parts = trimmed.split(":")[1].trim().split(",  Week: ");
+            currentDisplay.edid.manufacture_year = parseInt(parts[0]);
+            currentDisplay.edid.manufacture_week = parseInt(trimmed.split(":")[2].trim());
+        } else if (trimmed.startsWith("VCP version:")) {
+            currentDisplay.vcp_version = trimmed.split(":")[1].trim();
         }
     }
+    if (currentDisplay) displays.push(currentDisplay);
+    return displays;
 }
 async function fetchLight(displayID: number): Promise<{ light: number; max: number }> {
     let result = {
@@ -143,7 +145,8 @@ const created: Map<number, DDCBrightness> = new Map();
 @register()
 class DDCBrightness extends GObject.Object {
     @property(Number) declare light: number;
-    @property(String) declare iconName: string;
+    @property() protected declare monitors: Array<Display>;
+    @property(String) protected declare iconName: string;
     @signal(Number) declare brightnessChanged: (brightness: number) => void;
     #displayMaxBrightness = 100;
     #lock = false;
