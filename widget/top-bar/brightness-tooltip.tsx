@@ -3,6 +3,7 @@ import PopupWindow from "../base/popup-window";
 import { bind } from "astal";
 import BrightnessIcon from "./brightness-icon";
 import DDCBrightness from "../../lib/ddc-brightness";
+import Hyprland from "gi://AstalHyprland?version=0.1";
 export default function BrightnessTooltip({
     forward,
     trigger,
@@ -14,12 +15,15 @@ export default function BrightnessTooltip({
     onHover?: (self: Astal.Window, event: Astal.HoverEvent) => void;
     onHoverLost?: (self: Astal.Window, event: Astal.HoverEvent) => void;
 }) {
-    const ddc = DDCBrightness.get_monitor(1);
-
+    const ddc = DDCBrightness.get_default();
+    const hypr = Hyprland.get_default();
+    const monitor = ddc.monitors[trigger.get_display().get_n_monitors() - 1];
     return (
         <PopupWindow forward={forward} trigger={trigger}>
             <eventbox
-                onScroll={(_, e) => (ddc.light += e.delta_y > 0 ? -5 : 5)}
+                onScroll={(_, e) => {
+                    monitor.brightness += e.delta_y > 0 ? -5 : 5;
+                }}
                 onHover={(self, e) => onHover(self.parent as Astal.Window, e)}
                 onHoverLost={(self, e) => onHoverLost(self.parent as Astal.Window, e)}
             >
@@ -34,10 +38,12 @@ export default function BrightnessTooltip({
                     <BrightnessIcon size={28} onlyIcon={true} padding={1} />
                     <slider
                         setup={(self) => {
-                            self.value = ddc.light;
+                            self.value = monitor.brightness;
                             self.connect("scroll-event", (_, e: Gdk.Event) => {
-                                let v = ddc.light + 5 * (e.get_scroll_deltas()[2] < 0 ? 1.0 : -1.0);
-                                ddc.light = Math.min(Math.max(v, 0), 100);
+                                let v =
+                                    monitor.brightness +
+                                    5 * (e.get_scroll_deltas()[2] < 0 ? 1.0 : -1.0);
+                                monitor.brightness = Math.min(Math.max(v, 0), 100);
                             });
                         }}
                         heightRequest={100}
@@ -46,12 +52,12 @@ export default function BrightnessTooltip({
                         orientation={Gtk.Orientation.VERTICAL}
                         inverted={true}
                         max={100}
-                        onDragged={(self) => (ddc.light = self.value)}
-                        value={bind(ddc, "light")}
+                        onDragged={(self) => (monitor.brightness = self.value)}
+                        value={bind(monitor, "brightness")}
                     />
                     <label
                         css={"font-size: 14px;"}
-                        label={bind(ddc, "light").as((v) => v.toFixed(0).toString())}
+                        label={bind(monitor, "brightness").as((v) => v.toFixed(0).toString())}
                     />
                 </box>
             </eventbox>

@@ -1,12 +1,13 @@
-import { exec, execAsync, GObject, property, register, signal } from "astal";
+import { bind, exec, execAsync, GLib, GObject, property, register, signal } from "astal";
+import Hyprland from "gi://AstalHyprland?version=0.1";
 
-const icons = {
-    80: "high",
-    50: "medium",
-    25: "low",
-    0: "off",
-};
 function get_icon(value: number) {
+    const icons = {
+        80: "high",
+        50: "medium",
+        25: "low",
+        0: "off",
+    };
     const icon = [80, 50, 25, 0].find((threshold) => {
         return threshold <= value;
     });
@@ -46,7 +47,7 @@ class VCP {
         });
     }
 }
-type Display = {
+type DDCMonitor = {
     edid: {
         mfg_id: string;
         model: string;
@@ -61,18 +62,18 @@ type Display = {
     vcp_version: string;
 };
 
-function DetectDisplays(): Array<Display> {
-    const lines = exec(["ddcutil", "detect"]).trim().split("\n");
-    const displays: Array<Display> = [];
-    let currentDisplay: Display = null as any;
+async function detectDisplays(): Promise<DDCMonitor[]> {
+    const lines = (await execAsync(["ddcutil", "detect"])).trim().split("\n");
+    const displays: Array<DDCMonitor> = [];
+    let i = -1;
     for (const line of lines) {
         let trimmed = line.trim();
         if (trimmed.startsWith("Invalid display")) {
             continue;
         }
         if (trimmed.startsWith("Display")) {
-            if (currentDisplay) displays.push(currentDisplay);
-            currentDisplay = {
+            i++;
+            displays.push({
                 edid: {
                     mfg_id: "",
                     model: "",
@@ -85,42 +86,41 @@ function DetectDisplays(): Array<Display> {
                 i2c_bus: "",
                 drm_connector: "",
                 vcp_version: "",
-            };
+            });
         } else if (trimmed.startsWith("I2C bus:")) {
-            currentDisplay.i2c_bus = trimmed.split(":")[1].trim();
+            displays[i].i2c_bus = trimmed.split(":")[1].trim();
         } else if (trimmed.startsWith("DRM connector:")) {
-            currentDisplay.drm_connector = trimmed.split(":")[1].trim();
+            displays[i].drm_connector = trimmed.split(":")[1].trim();
         } else if (trimmed.startsWith("Mfg id:")) {
-            currentDisplay.edid.mfg_id = trimmed.split(":")[1].trim();
+            displays[i].edid.mfg_id = trimmed.split(":")[1].trim();
         } else if (trimmed.startsWith("Model:")) {
-            currentDisplay.edid.model = trimmed.split(":")[1].trim();
+            displays[i].edid.model = trimmed.split(":")[1].trim();
         } else if (trimmed.startsWith("Product code:")) {
-            currentDisplay.edid.product_code = parseInt(trimmed.split(":")[1].trim().split(" ")[0]);
+            displays[i].edid.product_code = parseInt(trimmed.split(":")[1].trim().split(" ")[0]);
         } else if (trimmed.startsWith("Serial number:")) {
-            currentDisplay.edid.serial_number = parseInt(trimmed.split(":")[1].trim()) || null;
+            displays[i].edid.serial_number = parseInt(trimmed.split(":")[1].trim()) || null;
         } else if (trimmed.startsWith("Binary serial number:")) {
-            currentDisplay.edid.binary_serial_number = parseInt(
+            displays[i].edid.binary_serial_number = parseInt(
                 trimmed.split(":")[1].trim().split(" ")[0]
             );
         } else if (trimmed.startsWith("Manufacture year:")) {
             const parts = trimmed.split(":")[1].trim().split(",  Week: ");
-            currentDisplay.edid.manufacture_year = parseInt(parts[0]);
-            currentDisplay.edid.manufacture_week = parseInt(trimmed.split(":")[2].trim());
+            displays[i].edid.manufacture_year = parseInt(parts[0]);
+            displays[i].edid.manufacture_week = parseInt(trimmed.split(":")[2].trim());
         } else if (trimmed.startsWith("VCP version:")) {
-            currentDisplay.vcp_version = trimmed.split(":")[1].trim();
+            displays[i].vcp_version = trimmed.split(":")[1].trim();
         }
     }
-    if (currentDisplay) displays.push(currentDisplay);
     return displays;
 }
-async function fetchLight(displayID: number): Promise<{ light: number; max: number }> {
+function fetchLight(i2cBus: string): { light: number; max: number } {
     let result = {
         light: 0,
         max: 0,
     };
     const cvp = 10;
     const regex = /current value\s*=\s*(\d+)\s*,\s*max value\s*=\s*(\d+)/;
-    const output = await execAsync(`ddcutil getvcp ${cvp} --display=${displayID}`);
+    const output = exec(["ddcutil", "getvcp", cvp.toString(), "-b", i2cBus.split("-").pop()!]);
     const match = output.match(regex);
     if (match) {
         result.light = parseInt(match[1], 10);
@@ -128,75 +128,94 @@ async function fetchLight(displayID: number): Promise<{ light: number; max: numb
     }
     return result;
 }
-async function putLight(displayID: number, light: number) {
+const i2cLock = new GLib.RecMutex();
+async function putLight(i2cBus: string, light: number) {
+    i2cLock.lock();
     const cvp = 10;
-    await execAsync(`ddcutil setvcp ${cvp} ${light} --display=${displayID}`).catch((err) =>
-        console.error(
-            "ddcutil setvcp failed for displayID:",
-            displayID,
-            "light:",
-            light,
-            "error:",
-            err
+    await execAsync([
+        "ddcutil",
+        "setvcp",
+        cvp.toString(),
+        light.toString(),
+        "-b",
+        i2cBus.split("-").pop()!,
+    ])
+        .catch((err) =>
+            console.error(
+                "ddcutil setvcp failed for display:",
+                i2cBus,
+                "light:",
+                light,
+                "error:",
+                err
+            )
         )
-    );
+        .finally(() => i2cLock.unlock());
 }
-const created: Map<number, DDCBrightness> = new Map();
 @register()
-class DDCBrightness extends GObject.Object {
-    @property(Number) declare light: number;
-    @property() protected declare monitors: Array<Display>;
-    @property(String) protected declare iconName: string;
+export class Monitor extends GObject.Object {
+    info: DDCMonitor | null = null;
+    @property(Number) declare brightness: number;
+    @property() declare iconName: string;
     @signal(Number) declare brightnessChanged: (brightness: number) => void;
-    #displayMaxBrightness = 100;
-    #lock = false;
-    #monitorID: number;
-    get monitorID() {
-        return this.#monitorID;
-    }
-    constructor(monitor: number) {
+    #maxBrightness: number = 0;
+    constructor() {
         super();
-        this.#monitorID = monitor;
-        this.#displayMaxBrightness = 100;
-        this.iconName = get_icon(100);
-        fetchLight(monitor).then(({ light, max }) => {
-            this.#displayMaxBrightness = max;
-            this.light = Math.floor((light / max) * 100);
-            this.iconName = get_icon(this.light);
-
-            this.connect("notify::light", async () => {
-                let value = this.light;
-                if (value < 0) value = 0;
-                if (value > 100) value = 100;
-                if (value !== this.light) {
-                    this.light = value;
-                    return;
-                }
-                this.iconName = get_icon(this.light);
-
-                if (this.#lock) return;
-                this.#lock = true;
-                for (let light = -1; light != this.light; ) {
-                    light = this.light;
-                    const val = Math.floor((light / 100) * this.#displayMaxBrightness);
-                    await putLight(monitor, val);
-                    this.brightnessChanged(val);
-                }
-                this.#lock = false;
-            });
+        this.brightness = 100;
+        this.iconName = get_icon(this.brightness);
+    }
+    init(info: DDCMonitor) {
+        this.info = info;
+        let lock = false;
+        const { light, max } = fetchLight(info.i2c_bus);
+        this.brightness = light;
+        this.#maxBrightness = max;
+        this.iconName = get_icon(this.brightness);
+        this.connect("notify::brightness", async () => {
+            let value = this.brightness;
+            if (value < 0) value = 0;
+            if (value > 100) value = 100;
+            if (value !== this.brightness) {
+                this.brightness = value;
+                return;
+            }
+            this.iconName = get_icon(this.brightness);
+            if (lock) return;
+            lock = true;
+            for (let light = -1; light != this.brightness; ) {
+                light = this.brightness;
+                const val = Math.floor((light / 100) * this.#maxBrightness);
+                await putLight(this.info!.i2c_bus, val);
+                this.brightnessChanged(val);
+            }
+            lock = false;
         });
     }
 }
-function get_monitor(monitorID: number): DDCBrightness {
-    if (created.has(monitorID)) {
-        return created.get(monitorID)!;
+@register()
+class DDCBrightness extends GObject.Object {
+    @property() declare monitors: Array<Monitor>;
+
+    async setup() {
+        this.monitors = Hyprland.get_default().monitors.map(() => new Monitor());
+        detectDisplays().then((displays) => {
+            displays.forEach((display, index) => {
+                this.monitors[index].init(display);
+            });
+        });
     }
-    const monitor = new DDCBrightness(monitorID);
-    created.set(monitorID, monitor);
-    return monitor;
+    constructor() {
+        super();
+        this.setup();
+        bind(Hyprland.get_default(), "monitors").subscribe(() => this.setup());
+    }
+}
+const defaultDDCBrightness = new DDCBrightness();
+function get_default(): DDCBrightness {
+    return defaultDDCBrightness;
 }
 
 export default {
-    get_monitor,
-    DDCBrightness,
+    get_default,
+    Monitor,
 };

@@ -3,10 +3,11 @@ import PopupWindow from "../base/popup-window";
 import WirePlumber from "gi://AstalWp";
 import { bind, Variable } from "astal";
 import { EventIcon, Space } from "../base";
+import Pango from "gi://Pango?version=1.0";
 const setVolume = (device: WirePlumber.Endpoint, v: number) => {
     device.volume = v;
-    if (v == 0) device.mute = true;
-    else device.mute = false;
+    if (v == 0) device.set_mute(true);
+    else device.set_mute(false);
 };
 const onScroll = (device: WirePlumber.Endpoint, delta_y: number) => {
     let v = device.volume + 0.01 * (delta_y < 0 ? 1.0 : -1.0);
@@ -14,65 +15,90 @@ const onScroll = (device: WirePlumber.Endpoint, delta_y: number) => {
 };
 function Slider({ endpoint: p }: { endpoint: WirePlumber.Endpoint }) {
     const bgColor = Variable("rgba(255, 255, 255, 0.1)");
+    const m = WirePlumber.MediaClass;
+    const getIcon = () => {
+        switch (p.mediaClass) {
+            case m.AUDIO_STREAM:
+            case m.AUDIO_SPEAKER:
+            case m.AUDIO_RECORDER:
+                if (p.mute) return "audio-volume-muted-symbolic";
+                else return "audio-volume-high-symbolic";
+            case m.AUDIO_MICROPHONE:
+                if (p.mute) return "audio-input-microphone-muted-symbolic";
+                else return "audio-input-microphone-high-symbolic";
+            default:
+                return "audio-volume-high-symbolic";
+        }
+    };
     return (
-        <box
-            setup={(self) => {
-                self.hook(bind(p, "isDefault"), () => {
-                    if (p.isDefault && p.mediaClass === WirePlumber.MediaClass.AUDIO_SPEAKER)
-                        bgColor.set("rgba(31, 218, 255, 0.149)");
+        <eventbox onScroll={(_, e) => onScroll(p, e.delta_y)}>
+            <box
+                setup={(self) => {
+                    self.hook(bind(p, "isDefault"), () => {
+                        if (p.isDefault && p.mediaClass === m.AUDIO_SPEAKER)
+                            bgColor.set("rgba(31, 136, 255, 0.149)");
+                        else bgColor.set("rgba(255, 255, 255, 0.1)");
+                    });
+                    if (p.isDefault && p.mediaClass === m.AUDIO_SPEAKER)
+                        bgColor.set("rgba(31, 136, 255, 0.149)");
                     else bgColor.set("rgba(255, 255, 255, 0.1)");
-                });
-                if (p.isDefault && p.mediaClass === WirePlumber.MediaClass.AUDIO_SPEAKER)
-                    bgColor.set("rgba(31, 218, 255, 0.149)");
-                else bgColor.set("rgba(255, 255, 255, 0.1)");
-            }}
-            css={bgColor(
-                (c) => `
+                }}
+                css={bgColor(
+                    (c) => `
                 background: ${c};
                 padding: 6px 12px 6px 12px;
                 border-radius: 8px;
             `
-            )}
-        >
-            <EventIcon
-                iconName={bind(p, "volumeIcon")}
-                size={38}
-                iconSize={64}
-                useCssColor={false}
-                onClick={() => {
-                    p.mute = !p.mute;
-                }}
-            />
-            <box vertical={true} hexpand={true}>
-                <label
-                    label={p.description}
-                    halign={Gtk.Align.START}
-                    marginStart={10}
-                    marginEnd={10}
-                />
-                <slider
-                    setup={(self) => {
-                        self.value = p.volume * 100;
-                        self.connect("scroll-event", (_, e: Gdk.Event) =>
-                            onScroll(p, e.get_scroll_deltas()[2])
-                        );
+                )}
+            >
+                <EventIcon
+                    iconName={bind(p, "mute").as((m) => {
+                        return getIcon();
+                    })}
+                    size={38}
+                    iconSize={64}
+                    useCssColor={false}
+                    onClick={() => {
+                        p.set_mute(!p.mute);
                     }}
-                    halign={Gtk.Align.FILL}
-                    hexpand={true}
-                    orientation={Gtk.Orientation.HORIZONTAL}
-                    widthRequest={230}
-                    max={100}
-                    onDragged={(self) => setVolume(p, self.value / 100)}
-                    value={bind(p, "volume").as((n) => n * 100)}
+                    tooltipText={p.description}
+                />
+                <eventbox onClick={() => p.set_is_default(true)}>
+                    <box vertical={true} hexpand={true}>
+                        <label
+                            label={p.description}
+                            halign={Gtk.Align.START}
+                            marginStart={10}
+                            ellipsize={Pango.EllipsizeMode.END}
+                            marginEnd={10}
+                            wrap={true}
+                            wrapMode={Pango.WrapMode.CHAR}
+                        />
+                        <slider
+                            setup={(self) => {
+                                self.value = p.volume * 100;
+                                self.connect("scroll-event", (_, e: Gdk.Event) =>
+                                    onScroll(p, e.get_scroll_deltas()[2])
+                                );
+                            }}
+                            halign={Gtk.Align.FILL}
+                            hexpand={true}
+                            orientation={Gtk.Orientation.HORIZONTAL}
+                            widthRequest={220}
+                            max={100}
+                            onDragged={(self) => setVolume(p, self.value / 100)}
+                            value={bind(p, "volume").as((n) => n * 100)}
+                        />
+                    </box>
+                </eventbox>
+                <label
+                    css={"font-size: 16px;"}
+                    halign={Gtk.Align.CENTER}
+                    widthRequest={32}
+                    label={bind(p, "volume").as((n) => (n * 100).toFixed(0))}
                 />
             </box>
-            <label
-                css={"font-size: 16px;"}
-                halign={Gtk.Align.CENTER}
-                widthRequest={32}
-                label={bind(p, "volume").as((n) => (n * 100).toFixed(0))}
-            />
-        </box>
+        </eventbox>
     );
 }
 export default function VolumePopup({
@@ -101,31 +127,15 @@ export default function VolumePopup({
                     css={`
                         padding: 16px;
                     `}
-                    setup={(self) => {
-                        const speakerBox = self.get_children()[0] as Gtk.ComboBoxText;
-                        let index = -1;
-                        wp.get_endpoints()!.forEach((p) => {
-                            if (p.mediaClass !== WirePlumber.MediaClass.AUDIO_SPEAKER) return;
-                            speakerBox.append_text(p.description);
-                            index++;
-                            if (p.isDefault) speakerBox.set_active(index);
-                        });
-                        speakerBox.connect("changed", (self) => {
-                            const name = self.get_active_text();
-                            wp.get_endpoints()!.forEach((p) => {
-                                if (p.description === name) {
-                                    p.set_is_default(true);
-                                    return;
-                                }
-                            });
-                        });
-                    }}
                 >
-                    {(() => {
-                        const box = Gtk.ComboBoxText.new();
-                        box.show_all();
-                        return box;
-                    })()}
+                    <label
+                        label={"声音"}
+                        halign={Gtk.Align.START}
+                        marginStart={8}
+                        css={`
+                            font-size: 20px;
+                        `}
+                    />
                     {(() => {
                         const list = wp
                             .get_endpoints()
@@ -136,11 +146,11 @@ export default function VolumePopup({
                             )
                             .map((endpoint) => Slider({ endpoint: endpoint }));
                         if (list?.length && list.length > 0)
-                            list.unshift(<Space space={8} useVertical={true} />);
+                            list.push(<Space space={8} useVertical={true} />);
                         return list;
                     })()}
                     {(() => {
-                        const list = wp
+                        return wp
                             .get_endpoints()
                             ?.filter(
                                 (p) =>
@@ -148,12 +158,9 @@ export default function VolumePopup({
                                     p.mediaClass === WirePlumber.MediaClass.VIDEO_SINK
                             )
                             .map((endpoint) => Slider({ endpoint: endpoint }));
-                        if (list?.length && list.length > 0)
-                            list.unshift(<Space space={8} useVertical={true} />);
-                        return list;
                     })()}
                     {(() => {
-                        const list = wp
+                        return wp
                             .get_endpoints()
                             ?.filter(
                                 (p) =>
@@ -165,9 +172,6 @@ export default function VolumePopup({
                                     ].includes(p.mediaClass)
                             )
                             .map((endpoint) => Slider({ endpoint: endpoint }));
-                        if (list?.length && list.length > 0)
-                            list.unshift(<Space space={8} useVertical={true} />);
-                        return list;
                     })()}
                 </box>
             </eventbox>

@@ -82,7 +82,9 @@ export default function PopupWindow({
     return (
         <window
             title={"PopupWindow"}
-            setup={windowSetup}
+            setup={(self) => {
+                self.connect("size-allocate", () => windowSetup(self));
+            }}
             layer={Astal.Layer.TOP}
             keymode={keymode}
             exclusivity={Astal.Exclusivity.EXCLUSIVE}
