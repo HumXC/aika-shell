@@ -5,7 +5,8 @@ import Notifd from "gi://AstalNotifd";
 import { Gdk, Gtk } from "astal/gtk3";
 import { GetConfig, SaveConfig } from "../../configs";
 import { SetupTooltip } from "../tooltip";
-import NotificationTooltip from "./notification-tooltip";
+import NotificationTooltip from "./notifications-tooltip";
+import NotifactionPopup from "../notification-popup";
 export class Cfg {
     dontDisturb: boolean = false;
 }
@@ -21,9 +22,6 @@ export default function NotificationsIcon({
     currentPopup?: Variable<string> | null;
 }) {
     const notifd = Notifd.get_default();
-    notifd.connect("notified", (_, n) => {
-        print("notified", n.toString(), notifd.notifications.length);
-    });
     const config = GetConfig(Cfg, "notifications-icon");
     const iconName = Variable("notifications-symbolic");
     const setIcon = () => {

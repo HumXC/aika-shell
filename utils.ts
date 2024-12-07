@@ -8,7 +8,7 @@ export function sleep(ms: number): Promise<void> {
 export function setHoverClassName(widget: EventBox, className: string = "") {
     if (className === "") className = widget.className;
     widget.className = className;
-    widget.connect("hover", () => (widget.className = className + "-hover"));
+    widget.connect("hover", () => (widget.className = `${className} ${className}-hover`));
     widget.connect("hover-lost", () => (widget.className = className));
 }
 

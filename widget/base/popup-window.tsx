@@ -98,16 +98,6 @@ export default function PopupWindow({
             css={"background: transparent;"}
         >
             <box
-                setup={(self) => {
-                    self.set_clip(
-                        new Gdk.Rectangle({
-                            x: 0,
-                            y: 0,
-                            width: 10,
-                            height: self.get_screen().get_height(),
-                        })
-                    );
-                }}
                 className={"PopupWindow"}
                 css={`
                     margin: ${gaps[0]}px ${gaps[1]}px ${gaps[2]}px ${gaps[3]}px;

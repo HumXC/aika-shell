@@ -31,6 +31,7 @@ export function SetupTooltip(
                 onHover = false;
                 closePopup();
             },
+            onDestroy: () => currentPopup?.set(""),
         });
     };
     self.connect("hover", () => {
@@ -79,6 +80,7 @@ export function SetupPopup(
                 isOpen = false;
                 closePopup();
             },
+            onDestroy: () => currentPopup?.set(""),
         });
     };
     self.connect("button-press-event", (_, e: Gdk.Event) => {

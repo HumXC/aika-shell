@@ -7,13 +7,7 @@ import ddcBrightness, { Monitor } from "../../lib/ddc-brightness";
 function Slider({ monitor: p }: { monitor: Monitor }) {
     return (
         <eventbox onScroll={(_, e) => (p.brightness += e.delta_y > 0 ? -5 : 5)}>
-            <box
-                css={`
-                    background: ${"rgba(255, 255, 255, 0.1)"};
-                    padding: 6px 12px 6px 12px;
-                    border-radius: 8px;
-                `}
-            >
+            <box className={"PopupWindowItem"}>
                 <EventIcon
                     iconName={"display-symbolic"}
                     size={38}

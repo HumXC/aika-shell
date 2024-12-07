@@ -33,23 +33,16 @@ function Slider({ endpoint: p }: { endpoint: WirePlumber.Endpoint }) {
     return (
         <eventbox onScroll={(_, e) => onScroll(p, e.delta_y)}>
             <box
+                className={"PopupWindowItem"}
                 setup={(self) => {
-                    self.hook(bind(p, "isDefault"), () => {
+                    const setCss = () => {
                         if (p.isDefault && p.mediaClass === m.AUDIO_SPEAKER)
-                            bgColor.set("rgba(31, 136, 255, 0.149)");
-                        else bgColor.set("rgba(255, 255, 255, 0.1)");
-                    });
-                    if (p.isDefault && p.mediaClass === m.AUDIO_SPEAKER)
-                        bgColor.set("rgba(31, 136, 255, 0.149)");
-                    else bgColor.set("rgba(255, 255, 255, 0.1)");
+                            self.className = "PopupWindowItem PopupWindowItem-selected";
+                        else self.className = "PopupWindowItem";
+                    };
+                    self.hook(bind(p, "isDefault"), setCss);
+                    setCss();
                 }}
-                css={bgColor(
-                    (c) => `
-                background: ${c};
-                padding: 6px 12px 6px 12px;
-                border-radius: 8px;
-            `
-                )}
             >
                 <EventIcon
                     iconName={bind(p, "mute").as((m) => {

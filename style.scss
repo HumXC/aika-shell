@@ -106,11 +106,22 @@ window.Powermenu {
 }
 box.PopupWindow {
     background: rgba(0, 0, 0, 0.8);
+    .PopupWindowItem {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 6px 12px 6px 12px;
+    }
+    .PopupWindowItem-selected {
+        background: rgba(31, 136, 255, 0.15);
+    }
+    .PopupWindowItem-hover {
+        background: rgba(255, 255, 255, 0.16);
+    }
 }
 
 box.NotificationTooltip {
     .NotificationIcon {
-        background: rgba(255, 255, 255, 0.098);
+        margin: 6px 0 6px 0;
         border-radius: 20%;
     }
     .NotificationIconClearButton {
