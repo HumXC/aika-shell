@@ -142,7 +142,8 @@ export default function VolumePopup({
                             ?.filter(
                                 (p) =>
                                     p.mediaClass === WirePlumber.MediaClass.AUDIO_STREAM ||
-                                    p.mediaClass === WirePlumber.MediaClass.VIDEO_STREAM
+                                    p.mediaClass === WirePlumber.MediaClass.VIDEO_STREAM ||
+                                    p.mediaClass === WirePlumber.MediaClass.AUDIO_RECORDER
                             )
                             .map((endpoint) => Slider({ endpoint: endpoint }));
                         if (list?.length && list.length > 0)
@@ -169,6 +170,7 @@ export default function VolumePopup({
                                         WirePlumber.MediaClass.VIDEO_STREAM,
                                         WirePlumber.MediaClass.AUDIO_SPEAKER,
                                         WirePlumber.MediaClass.VIDEO_SINK,
+                                        WirePlumber.MediaClass.AUDIO_RECORDER,
                                     ].includes(p.mediaClass)
                             )
                             .map((endpoint) => Slider({ endpoint: endpoint }));
