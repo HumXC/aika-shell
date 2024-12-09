@@ -115,7 +115,12 @@ function Notification({
                                 />
                             </box>
                         </box>
-                        <box marginTop={12} halign={Gtk.Align.FILL} spacing={6}>
+                        <box
+                            marginTop={12}
+                            halign={Gtk.Align.FILL}
+                            spacing={6}
+                            visible={n.actions.length > 0}
+                        >
                             {n.actions.map((a) => {
                                 return (
                                     <button

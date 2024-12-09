@@ -8,12 +8,14 @@ import Recorder from "./handler/wf-recorder";
 import Clipboard from "./handler/clipboard";
 import Powermenu from "./handler/powermenu";
 import ScreenLock from "./handler/lockscreen";
+import AppLauncher from "./handler/app-launcher";
 import _ from "./configs";
 Register("screenshot", Screenshot);
 Register("recorder", Recorder);
 Register("clipboard", Clipboard);
 Register("powermenu", Powermenu);
 Register("lockscreen", ScreenLock);
+Register("app-launcher", AppLauncher);
 import services from "./services";
 services();
 App.start({
