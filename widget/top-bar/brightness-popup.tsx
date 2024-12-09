@@ -3,11 +3,18 @@ import PopupWindow from "../base/popup-window";
 import { bind } from "astal";
 import { EventIcon } from "../base";
 import ddcBrightness, { Monitor } from "../../lib/ddc-brightness";
+import { getHyprlandRounding } from "../../utils";
 
-function Slider({ monitor: p }: { monitor: Monitor }) {
+function Slider({ monitor: p, rounding }: { monitor: Monitor; rounding: number }) {
     return (
         <eventbox onScroll={(_, e) => (p.brightness += e.delta_y > 0 ? -5 : 5)}>
-            <box className={"PopupWindowItem"}>
+            <box
+                className={"PopupWindowItem"}
+                css={`
+                    border-radius: ${rounding}px;
+                    padding: 0 12px;
+                `}
+            >
                 <EventIcon
                     iconName={"display-symbolic"}
                     size={38}
@@ -15,12 +22,13 @@ function Slider({ monitor: p }: { monitor: Monitor }) {
                     padding={2}
                     useCssColor={false}
                 />
-                <box vertical={true} hexpand={true}>
+                <box vertical={true} hexpand={true} marginEnd={6}>
                     <label
                         label={p.info?.drm_connector.substring(6, 100)}
                         halign={Gtk.Align.START}
                         marginStart={10}
                         marginEnd={10}
+                        marginTop={12}
                     />
                     <slider
                         setup={(self) => {
@@ -34,7 +42,6 @@ function Slider({ monitor: p }: { monitor: Monitor }) {
                         halign={Gtk.Align.FILL}
                         hexpand={true}
                         orientation={Gtk.Orientation.HORIZONTAL}
-                        widthRequest={230}
                         max={100}
                         onDragged={(self) => (p.brightness = self.value)}
                         value={bind(p, "brightness")}
@@ -61,6 +68,7 @@ export default function BrightnessPopup({
     onHover?: (self: Astal.Window, event: Astal.HoverEvent) => void;
     onHoverLost?: (self: Astal.Window, event: Astal.HoverEvent) => void;
 }) {
+    const rounding = getHyprlandRounding();
     return (
         <PopupWindow forward={forward} trigger={trigger}>
             <eventbox
@@ -74,6 +82,7 @@ export default function BrightnessPopup({
                     css={`
                         padding: 16px;
                     `}
+                    widthRequest={360}
                 >
                     <label
                         label={"屏幕"}
@@ -85,7 +94,7 @@ export default function BrightnessPopup({
                     />
                     {bind(ddcBrightness.get_default(), "monitors").as((monitors) => {
                         return monitors.map((p) => {
-                            return Slider({ monitor: p });
+                            return Slider({ monitor: p, rounding });
                         });
                     })}
                 </box>

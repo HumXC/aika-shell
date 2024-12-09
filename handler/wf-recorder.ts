@@ -1,5 +1,5 @@
 import { exec } from "astal";
-import { formatBytes, notifySend, slurpRect, wlCopy } from "../utils";
+import { formatBytes, formatDuration, notifySend, slurpRect, wlCopy } from "../utils";
 
 import WFRecorder from "../lib/wf-recorder";
 
@@ -24,7 +24,7 @@ function StopRecording() {
     const wf = WFRecorder.get_default();
     wf.stop();
     const size = formatBytes(Number.parseInt(exec("stat -c%s " + wf.file))).join(" ") + "B";
-    notifySend("Recording finished.", `${wf.duration} | ${size}`, {
+    notifySend("Recording finished.", `${formatDuration(wf.duration)} | ${size}`, {
         icon: "record-screen-symbolic",
         appName: "Recoder",
     });

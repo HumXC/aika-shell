@@ -1,9 +1,9 @@
 import { Astal, Gtk, Widget } from "astal/gtk3";
 import PopupWindow from "../base/popup-window";
-import { bind } from "astal";
+import { bind, idle } from "astal";
 import { EventIcon, Space } from "../base";
 import Notifd from "gi://AstalNotifd";
-import { setHoverClassName } from "../../utils";
+import { createRoundedMask, getHyprlandRounding, setHoverClassName } from "../../utils";
 function Item({
     notifd,
     appName,
@@ -15,17 +15,27 @@ function Item({
     appIcon: string;
     count: number;
 }) {
+    const rounding = getHyprlandRounding();
     return (
         <revealer
             transitionDuration={100}
             transitionType={Gtk.RevealerTransitionType.SLIDE_DOWN}
             revealChild={true}
         >
-            <eventbox setup={(self) => setHoverClassName(self, "PopupWindowItem")}>
+            <eventbox
+                setup={(self) => setHoverClassName(self, "PopupWindowItem")}
+                css={`
+                    border-radius: ${rounding}px;
+                `}
+            >
                 <box
                     className={"PopupWindowItem"}
                     halign={Gtk.Align.FILL}
                     valign={Gtk.Align.CENTER}
+                    css={`
+                        border-radius: ${rounding}px;
+                        padding: 6px;
+                    `}
                 >
                     <eventbox
                         onClick={(self, e) => {
@@ -36,16 +46,16 @@ function Item({
                         <box>
                             <box className={"NotificationIcon"}>
                                 <icon
-                                    icon={appIcon === "" ? "applications-system-symbolic" : appIcon}
                                     css={`
-                                        font-size: 26px;
+                                        font-size: 38px;
                                     `}
+                                    icon={appIcon === "" ? "applications-system-symbolic" : appIcon}
                                 />
                             </box>
                             <Space space={10} />
                             <label
                                 label={appName}
-                                css={"font-size: 16px;"}
+                                css={"font-size: 14px;"}
                                 hexpand={true}
                                 halign={Gtk.Align.START}
                             />
@@ -61,13 +71,13 @@ function Item({
                         setup={(self) => setHoverClassName(self, "NotificationIconClearButton")}
                         onClick={(self, e) => {
                             if (e.button !== Astal.MouseButton.PRIMARY) return;
+                            const revealer = self.parent.parent.parent as Widget.Revealer;
+                            revealer.set_reveal_child(false);
                             notifd.notifications.forEach((nn) => {
                                 if (nn.appName === appName) {
                                     nn.dismiss();
                                 }
                             });
-                            const revealer = self.parent.parent.parent as Widget.Revealer;
-                            revealer.set_reveal_child(false);
                         }}
                         iconName={"edit-delete-symbolic"}
                         size={28}
@@ -102,10 +112,10 @@ export default function NotificationTooltip({
                 <box
                     className={"NotificationTooltip"}
                     vertical={true}
-                    widthRequest={250}
+                    widthRequest={300}
                     hexpand={true}
                     css={`
-                        padding: 10px;
+                        padding: 12px;
                     `}
                 >
                     <box hexpand={true} halign={Gtk.Align.FILL} valign={Gtk.Align.START}>

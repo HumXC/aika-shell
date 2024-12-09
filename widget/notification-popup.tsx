@@ -1,10 +1,17 @@
-import { Astal, Gdk, Gtk } from "astal/gtk3";
+import { Astal, Gtk, Widget } from "astal/gtk3";
 import Notifd from "gi://AstalNotifd";
-import Hyprland from "gi://AstalHyprland";
-import { getHyprloandOption, lookUpIcon } from "../utils";
-import { timeout } from "astal";
-import GdkPixbuf from "gi://GdkPixbuf?version=2.0";
+import {
+    createRoundedMask,
+    getHyprlandGaps,
+    getHyprlandRounding,
+    getHyprloandOption,
+    setHoverClassName,
+} from "../utils";
+import { Binding, idle, timeout, Variable } from "astal";
 import Pango from "gi://Pango?version=1.0";
+import { Space } from "./base";
+import { BindableChild } from "astal/gtk3/astalify";
+import TransitionInOut from "./base/transition-in-out";
 
 function Notification({
     n,
@@ -13,80 +20,125 @@ function Notification({
 }: {
     n: Notifd.Notification;
     gaps: number[];
-    rounding: string;
+    rounding: number;
 }) {
+    let isClosed = false;
+    let box: Widget.Box = null as any;
+    let inHover = false;
+    const duration = 100;
+    const close = () => {
+        if (isClosed || inHover) return;
+        isShow.set(false);
+        timeout(duration, () => idle(() => box.destroy()));
+        isClosed = true;
+    };
+    const isShow = Variable(false);
     return (
-        <box
-            setup={(self) => {
-                timeout(3000, () => {
-                    self.destroy();
-                });
-            }}
-            css={`
-                margin: ${gaps[0]}px ${gaps[1]}px ${gaps[2]}px ${gaps[3]}px;
-                border-radius: ${rounding}px;
-            `}
-            className={"PopupWindow"}
-            heightRequest={100}
-            widthRequest={300}
-            valign={Gtk.Align.FILL}
-        >
-            <box className={"PopupWindowItem"} vertical={true}>
-                <box vexpand={true}>
-                    <box
-                        heightRequest={50}
-                        widthRequest={50}
-                        setup={(self) => {
-                            const theme = Gtk.IconTheme.get_default();
-                            let icon =
-                                n.image ||
-                                theme.lookup_icon(n.appIcon, 256, 0)?.get_filename() ||
-                                theme
-                                    .lookup_icon("applications-system-symbolic", 256, 0)
-                                    ?.get_filename() ||
-                                "";
-                            self.css = `
-                            border-radius: 50px;
-                            background-image: url("${icon}");
-                            background-size: 100%;  
-                            background-repeat: no-repeat;
-                            background-position: center;
-                        `;
-                        }}
-                    ></box>
-                    <box vertical={true} halign={Gtk.Align.START} marginStart={20}>
+        <TransitionInOut isShow={isShow()} duration={duration}>
+            <box
+                setup={(self) => {
+                    idle(() => isShow.set(true));
+                    box = self;
+                    timeout(5000, () => {
+                        close();
+                    });
+                }}
+                css={`
+                    margin: ${gaps[0]}px ${gaps[1]}px 0 ${gaps[3]}px;
+                    border-radius: ${rounding}px;
+                `}
+                className={"PopupWindow NotificationPopup"}
+                widthRequest={320}
+                valign={Gtk.Align.FILL}
+            >
+                <eventbox
+                    setup={(self) => setHoverClassName(self, "PopupWindowItem")}
+                    onClick={(self, e) => {
+                        if (e.button !== Astal.MouseButton.PRIMARY) return;
+                        close();
+                        n.actions.forEach((a) => {
+                            if (a.id === "default") n.invoke(a.id);
+                        });
+                    }}
+                    onHover={(self) => (inHover = true)}
+                    onHoverLost={(self) => {
+                        inHover = false;
+                        timeout(3000, () => {
+                            close();
+                        });
+                    }}
+                >
+                    <box className={"NotificationContent"} vertical={true}>
                         <box>
-                            <label
-                                label={n.summary}
-                                hexpand={true}
-                                css={"font-size: 16px;"}
-                                halign={Gtk.Align.START}
-                                wrap={true}
-                                wrapMode={Pango.WrapMode.CHAR}
+                            <icon
+                                // @ts-ignore
+                                onDraw={(self: Widget.Icon, cr: any) => {
+                                    if (!n.image) return;
+                                    createRoundedMask(cr, 0, 0, 48, 48, rounding);
+                                    cr.clip();
+                                }}
+                                setup={(self) => {
+                                    if (!n.image) return;
+                                    self.css = "font-size: 48px;";
+                                }}
+                                icon={n.image || n.appIcon || "applications-system-symbolic"}
+                                css={`
+                                    font-size: 40px;
+                                    margin: 2px;
+                                `}
                             />
-                            <label
-                                label={n.appName}
-                                hexpand={true}
-                                css={"font-size: 12px; color: #888;"}
-                                halign={Gtk.Align.START}
-                            />
+                            <box vertical={true} halign={Gtk.Align.START} marginStart={12}>
+                                <box hexpand={true}>
+                                    <label
+                                        label={n.summary}
+                                        css={"font-size: 14px;"}
+                                        halign={Gtk.Align.START}
+                                        ellipsize={Pango.EllipsizeMode.END}
+                                        wrapMode={Pango.WrapMode.CHAR}
+                                    />
+                                    <label
+                                        marginStart={4}
+                                        label={n.appName}
+                                        hexpand={true}
+                                        css={"font-size: 12px; color: #888;"}
+                                        halign={Gtk.Align.START}
+                                        valign={Gtk.Align.END}
+                                    />
+                                </box>
+                                <Space space={2} useVertical={true} />
+                                <label
+                                    label={n.body}
+                                    ellipsize={Pango.EllipsizeMode.END}
+                                    css={"font-size: 12px; color: #e3e3e3;"}
+                                    hexpand={true}
+                                    halign={Gtk.Align.START}
+                                />
+                            </box>
                         </box>
-                        <label label={n.body} wrap={true} hexpand={true} halign={Gtk.Align.START} />
+                        <box marginTop={12} halign={Gtk.Align.FILL} spacing={6}>
+                            {n.actions.map((a) => {
+                                return (
+                                    <button
+                                        label={a.label}
+                                        onClick={() => {
+                                            inHover = false;
+                                            close();
+                                            n.invoke(a.id);
+                                        }}
+                                    />
+                                );
+                            })}
+                        </box>
                     </box>
-                </box>
-                <levelbar maxValue={100} value={100} />
+                </eventbox>
             </box>
-        </box>
+        </TransitionInOut>
     );
 }
 export default function NotifactionPopup({ notificationID: id }: { notificationID: number }) {
     const notifd = Notifd.get_default();
-    const gapsOption = getHyprloandOption("general:gaps_out", "custom");
-    let gaps = [0, 0, 0, 0];
-    if (gapsOption) gaps = gapsOption.split(" ").map(Number);
-    const roundingOption = getHyprloandOption("decoration:rounding", "int");
-    let rounding = "0";
-    if (roundingOption) rounding = roundingOption;
+    const gaps = getHyprlandGaps();
+    const rounding = getHyprlandRounding();
     return (
         <window
             title={"NotificationPopup"}

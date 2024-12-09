@@ -80,7 +80,7 @@ export function notifySend(
     if (options?.wait === true) cmd.push("-w");
     addCmd("A", options?.action, "");
     if (options?.icon) cmd.push("-i", options.icon);
-    cmd.push('"' + summary + '"', '"' + body + '"');
+    cmd.push(summary, body);
     execAsync(cmd).catch((e) => print("通知发送失败", e));
 }
 export function slurp(
@@ -219,6 +219,19 @@ export function getHyprloandOption(option: string, type: "custom" | "int"): stri
     if (!opt.set) return null;
     return (opt as any)[type];
 }
+export function getHyprlandGaps(): [number, number, number, number] {
+    const gapsOption = getHyprloandOption("general:gaps_out", "custom");
+    let gaps = [0, 0, 0, 0];
+    if (gapsOption) gaps = gapsOption.split(" ").map(Number);
+    return gaps as [number, number, number, number];
+}
+export function getHyprlandRounding(): number {
+    const roundingOption = getHyprloandOption("decoration:rounding", "int");
+    let rounding = "0";
+    if (roundingOption) rounding = roundingOption;
+    return Number(rounding);
+}
+
 export function lookUpIcon(
     name: string,
     size: 16 | 22 | 24 | 32 | 64 | 256,
@@ -227,4 +240,24 @@ export function lookUpIcon(
     const icon = Gtk.IconTheme.get_default().lookup_icon(name, size, flags);
     if (icon) return icon.load_icon();
     return null;
+}
+export function createRoundedMask(
+    cr: any,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+) {
+    cr.newPath();
+    cr.moveTo(x + radius, y);
+    cr.lineTo(x + width - radius, y);
+    cr.arc(x + width - radius, y + radius, radius, 1.5 * Math.PI, 2 * Math.PI); // Top-right corner
+    cr.lineTo(x + width, y + height - radius);
+    cr.arc(x + width - radius, y + height - radius, radius, 0, 0.5 * Math.PI); // Bottom-right corner
+    cr.lineTo(x + radius, y + height);
+    cr.arc(x + radius, y + height - radius, radius, 0.5 * Math.PI, Math.PI); // Bottom-left corner
+    cr.lineTo(x, y + radius);
+    cr.arc(x + radius, y + radius, radius, Math.PI, 1.5 * Math.PI); // Top-left corner
+    cr.closePath();
 }

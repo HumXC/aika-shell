@@ -4,6 +4,7 @@ import WirePlumber from "gi://AstalWp";
 import { bind, Variable } from "astal";
 import { EventIcon, Space } from "../base";
 import Pango from "gi://Pango?version=1.0";
+import { getHyprlandRounding } from "../../utils";
 const setVolume = (device: WirePlumber.Endpoint, v: number) => {
     device.volume = v;
     if (v == 0) device.set_mute(true);
@@ -13,8 +14,7 @@ const onScroll = (device: WirePlumber.Endpoint, delta_y: number) => {
     let v = device.volume + 0.01 * (delta_y < 0 ? 1.0 : -1.0);
     setVolume(device, Math.min(Math.max(v, 0), 1));
 };
-function Slider({ endpoint: p }: { endpoint: WirePlumber.Endpoint }) {
-    const bgColor = Variable("rgba(255, 255, 255, 0.1)");
+function Slider({ endpoint: p, rounding }: { endpoint: WirePlumber.Endpoint; rounding: number }) {
     const m = WirePlumber.MediaClass;
     const getIcon = () => {
         switch (p.mediaClass) {
@@ -34,6 +34,10 @@ function Slider({ endpoint: p }: { endpoint: WirePlumber.Endpoint }) {
         <eventbox onScroll={(_, e) => onScroll(p, e.delta_y)}>
             <box
                 className={"PopupWindowItem"}
+                css={`
+                    border-radius: ${rounding}px;
+                    padding: 0 12px;
+                `}
                 setup={(self) => {
                     const setCss = () => {
                         if (p.isDefault && p.mediaClass === m.AUDIO_SPEAKER)
@@ -57,10 +61,11 @@ function Slider({ endpoint: p }: { endpoint: WirePlumber.Endpoint }) {
                     tooltipText={p.description}
                 />
                 <eventbox onClick={() => p.set_is_default(true)}>
-                    <box vertical={true} hexpand={true}>
+                    <box vertical={true} hexpand={true} marginEnd={6}>
                         <label
                             label={p.description}
                             halign={Gtk.Align.START}
+                            marginTop={12}
                             marginStart={10}
                             ellipsize={Pango.EllipsizeMode.END}
                             marginEnd={10}
@@ -77,7 +82,6 @@ function Slider({ endpoint: p }: { endpoint: WirePlumber.Endpoint }) {
                             halign={Gtk.Align.FILL}
                             hexpand={true}
                             orientation={Gtk.Orientation.HORIZONTAL}
-                            widthRequest={220}
                             max={100}
                             onDragged={(self) => setVolume(p, self.value / 100)}
                             value={bind(p, "volume").as((n) => n * 100)}
@@ -106,7 +110,7 @@ export default function VolumePopup({
     onHoverLost?: (self: Astal.Window, event: Astal.HoverEvent) => void;
 }) {
     const wp = WirePlumber.get_default() as WirePlumber.Wp;
-
+    const rounding = getHyprlandRounding();
     return (
         <PopupWindow forward={forward} trigger={trigger}>
             <eventbox
@@ -114,6 +118,7 @@ export default function VolumePopup({
                 onHoverLost={(self, e) => onHoverLost(self.parent as Astal.Window, e)}
             >
                 <box
+                    widthRequest={360}
                     className={"VolumePopup"}
                     vertical={true}
                     spacing={8}
@@ -138,7 +143,7 @@ export default function VolumePopup({
                                     p.mediaClass === WirePlumber.MediaClass.VIDEO_STREAM ||
                                     p.mediaClass === WirePlumber.MediaClass.AUDIO_RECORDER
                             )
-                            .map((endpoint) => Slider({ endpoint: endpoint }));
+                            .map((endpoint) => Slider({ endpoint, rounding }));
                         if (list?.length && list.length > 0)
                             list.push(<Space space={8} useVertical={true} />);
                         return list;
@@ -151,7 +156,7 @@ export default function VolumePopup({
                                     p.mediaClass === WirePlumber.MediaClass.AUDIO_SPEAKER ||
                                     p.mediaClass === WirePlumber.MediaClass.VIDEO_SINK
                             )
-                            .map((endpoint) => Slider({ endpoint: endpoint }));
+                            .map((endpoint) => Slider({ endpoint, rounding }));
                     })()}
                     {(() => {
                         return wp
@@ -166,7 +171,7 @@ export default function VolumePopup({
                                         WirePlumber.MediaClass.AUDIO_RECORDER,
                                     ].includes(p.mediaClass)
                             )
-                            .map((endpoint) => Slider({ endpoint: endpoint }));
+                            .map((endpoint) => Slider({ endpoint, rounding }));
                     })()}
                 </box>
             </eventbox>

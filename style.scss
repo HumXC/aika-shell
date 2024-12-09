@@ -105,11 +105,9 @@ window.Powermenu {
     }
 }
 box.PopupWindow {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.6);
     .PopupWindowItem {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 6px 12px 6px 12px;
+        background: rgba(176, 176, 176, 0.1);
     }
     .PopupWindowItem-selected {
         background: rgba(31, 136, 255, 0.15);
@@ -118,12 +116,18 @@ box.PopupWindow {
         background: rgba(255, 255, 255, 0.16);
     }
 }
-
-box.NotificationTooltip {
-    .NotificationIcon {
-        margin: 6px 0 6px 0;
-        border-radius: 20%;
+box.NotificationPopup {
+    .PopupWindowItem {
+        background: transparent;
     }
+    .PopupWindowItem-hover {
+        background: rgba(176, 176, 176, 0.1);
+    }
+    .NotificationContent {
+        padding: 12px;
+    }
+}
+box.NotificationTooltip {
     .NotificationIconClearButton {
         color: rgba(174, 174, 174, 0.68);
     }
