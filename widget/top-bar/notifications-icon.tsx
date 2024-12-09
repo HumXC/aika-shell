@@ -6,7 +6,6 @@ import { Gdk, Gtk } from "astal/gtk3";
 import { GetConfig, SaveConfig } from "../../configs";
 import { SetupTooltip } from "../tooltip";
 import NotificationTooltip from "./notifications-tooltip";
-import NotifactionPopup from "../notification-popup";
 export class Cfg {
     dontDisturb: boolean = false;
 }
@@ -71,9 +70,6 @@ export default function NotificationsIcon({
                 padding={0}
                 onButtonPressEvent={(self, e) => {
                     if (e.get_button()[1] === Gdk.BUTTON_SECONDARY) {
-                    }
-                    if (e.get_button()[1] === Gdk.BUTTON_MIDDLE) {
-                        notifd.set_dont_disturb(!notifd.dontDisturb);
                     }
                 }}
                 setup={(self) => {

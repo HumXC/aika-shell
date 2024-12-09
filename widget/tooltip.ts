@@ -60,9 +60,15 @@ export function SetupPopup(
     let popup: Astal.Window | null = null;
     let closeTimer: AstalIO.Time | null = null;
     let isOpen = false;
-    const closePopup = () => {
+    const closePopup = (now: boolean = false) => {
         if (popup === null) return;
         if (closeTimer) closeTimer.cancel();
+        if (now) {
+            popup?.close();
+            popup = null;
+            if (currentPopup?.get() === popupName) currentPopup.set("");
+            return;
+        }
         closeTimer = timeout(500, () => {
             if (isOpen) return;
             popup?.close();
@@ -90,9 +96,6 @@ export function SetupPopup(
         else currentPopup?.set("");
     });
     if (currentPopup) {
-        self.hook(bind(currentPopup), () => {
-            popup?.close();
-            popup = null;
-        });
+        self.hook(bind(currentPopup), () => closePopup(true));
     }
 }

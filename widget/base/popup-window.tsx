@@ -8,7 +8,6 @@ export default function PopupWindow({
     forward,
     keymode = Astal.Keymode.NONE,
     child,
-    closing,
     namespace = "popup-window",
     ...children
 }: {
@@ -17,7 +16,6 @@ export default function PopupWindow({
     keymode?: Astal.Keymode;
     child?: BindableChild;
     children?: Array<BindableChild>;
-    closing?: (self: Astal.Window) => boolean;
     namespace?: string;
 }) {
     const hypr = Hyprland.get_default();

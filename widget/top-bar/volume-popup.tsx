@@ -1,7 +1,7 @@
 import { Astal, Gdk, Gtk } from "astal/gtk3";
 import PopupWindow from "../base/popup-window";
 import WirePlumber from "gi://AstalWp";
-import { bind, Variable } from "astal";
+import { bind } from "astal";
 import { EventIcon, Space } from "../base";
 import Pango from "gi://Pango?version=1.0";
 import { getHyprlandRounding } from "../../utils";
