@@ -66,6 +66,7 @@ class WFRecorder extends GObject.Object {
         this.proc = Gio.Subprocess.new(cmd, Gio.SubprocessFlags.NONE);
 
         this.startTime = GLib.get_real_time();
+        this.duration = 0;
         this.started(this._file, this.startTime);
         this.isRecording = true;
         if (this.useMask && this._region) {

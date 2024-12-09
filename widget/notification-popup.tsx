@@ -24,10 +24,10 @@ function Notification({
 }) {
     let isClosed = false;
     let box: Widget.Box = null as any;
-    let inHover = false;
+    let onHover = false;
     const duration = 100;
     const close = () => {
-        if (isClosed || inHover) return;
+        if (isClosed || onHover) return;
         isShow.set(false);
         timeout(duration, () => idle(() => box.destroy()));
         isClosed = true;
@@ -52,17 +52,21 @@ function Notification({
                 valign={Gtk.Align.FILL}
             >
                 <eventbox
+                    css={`
+                        border-radius: ${rounding}px;
+                    `}
                     setup={(self) => setHoverClassName(self, "PopupWindowItem")}
                     onClick={(self, e) => {
                         if (e.button !== Astal.MouseButton.PRIMARY) return;
+                        onHover = false;
                         close();
                         n.actions.forEach((a) => {
                             if (a.id === "default") n.invoke(a.id);
                         });
                     }}
-                    onHover={(self) => (inHover = true)}
-                    onHoverLost={(self) => {
-                        inHover = false;
+                    onHover={() => (onHover = true)}
+                    onHoverLost={() => {
+                        onHover = false;
                         timeout(3000, () => {
                             close();
                         });
@@ -119,14 +123,14 @@ function Notification({
                             marginTop={12}
                             halign={Gtk.Align.FILL}
                             spacing={6}
-                            visible={n.actions.length > 0}
+                            visible={n.actions.length > 1}
                         >
                             {n.actions.map((a) => {
                                 return (
                                     <button
                                         label={a.label}
                                         onClick={() => {
-                                            inHover = false;
+                                            onHover = false;
                                             close();
                                             n.invoke(a.id);
                                         }}
