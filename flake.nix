@@ -11,6 +11,7 @@
         pkgs = import nixpkgs {
           inherit system;
         };
+        gjs = inputs.ags.packages.${pkgs.system}.gjs;
         extraPackages = with inputs.ags.packages.${pkgs.system};
           [
             astal3
@@ -32,6 +33,28 @@
         ags = inputs.ags.packages.${system}.default.override {
           extraPackages = extraPackages;
         };
+        tsconfig = ''
+          {
+              "\$schema": "https://json.schemastore.org/tsconfig",
+              "compilerOptions": {
+                  "experimentalDecorators": true,
+                  "strict": true,
+                  "target": "ES2022",
+                  "module": "ES2022",
+                  "moduleResolution": "Bundler",
+                  "jsx": "react-jsx",
+                  "jsxImportSource": "${gjs}/share/astal/gjs/gtk3",
+                  "paths": {
+                      "astal": [
+                          "${gjs}/share/astal/gjs"
+                      ],
+                      "astal/*": [
+                          "${gjs}/share/astal/gjs/*"
+                      ]
+                  },
+              }
+          }
+        '';
       in
       {
         packages.${system}.default = inputs.ags.lib.bundle {
@@ -45,7 +68,14 @@
           buildInputs = [
             ags
           ];
+          shellHook = ''
+            rm tsconfig.json
+            cat << EOF > tsconfig.json
+            ${tsconfig}
+            EOF
+          '';
         };
+
       }
     );
 }
