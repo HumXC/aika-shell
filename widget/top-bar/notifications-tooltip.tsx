@@ -1,11 +1,11 @@
 import { Astal, Gtk, Widget } from "astal/gtk3";
 import PopupWindow from "../base/popup-window";
-import { bind, Gio, idle } from "astal";
+import { bind, Gio, GLib, Variable } from "astal";
 import { EventIcon, Space } from "../base";
 import Notifd from "gi://AstalNotifd";
-import { createRoundedMask, getHyprlandRounding, setHoverClassName } from "../../utils";
+import { getHyprlandRounding, setHoverClassName } from "../../utils";
+import Apps from "gi://AstalApps?version=0.1";
 
-// TODO: 通过 Desktop Entry 获取图标
 function Item({
     notifd,
     appName,
@@ -14,7 +14,7 @@ function Item({
 }: {
     notifd: Notifd.Notifd;
     appName: string;
-    appIcon: string | Gio.Icon;
+    appIcon: string;
     count: number;
 }) {
     const rounding = getHyprlandRounding();
@@ -25,6 +25,7 @@ function Item({
             revealChild={true}
         >
             <eventbox
+                marginTop={12}
                 setup={(self) => setHoverClassName(self, "PopupWindowItem")}
                 css={`
                     border-radius: ${rounding}px;
@@ -48,15 +49,10 @@ function Item({
                         <box>
                             <box className={"NotificationIcon"}>
                                 <icon
-                                    iconSize={64}
                                     css={`
                                         font-size: 38px;
                                     `}
-                                    setup={(self) => {
-                                        if (appIcon instanceof Gio.Icon) {
-                                            self.gIcon = appIcon;
-                                        } else self.icon = appIcon;
-                                    }}
+                                    icon={appIcon}
                                 />
                             </box>
                             <Space space={10} />
@@ -108,7 +104,10 @@ export default function NotificationTooltip({
     onHoverLost?: (self: Astal.Window, event: Astal.HoverEvent) => void;
     onDestroy?: (self: Astal.Window) => void;
 }) {
+    const apps = new Apps.Apps().get_list();
+
     const notifd = Notifd.get_default();
+    const ns = Array.from(notifd.notifications);
     return (
         <PopupWindow forward={forward} trigger={trigger}>
             <eventbox
@@ -142,26 +141,23 @@ export default function NotificationTooltip({
                             }}
                         />
                     </box>
-                    <box
-                        heightRequest={16}
-                        visible={bind(notifd, "notifications").as((ns) => {
-                            return ns.length > 0;
-                        })}
-                    />
-                    <box spacing={8} vertical={true}>
+                    <box vertical={true}>
                         {(() => {
                             const filtered = new Map<
                                 string,
-                                { appName: string; appIcon: string | Gio.Icon; count: number }
+                                { appName: string; appIcon: string; count: number }
                             >();
-                            notifd.notifications.forEach((n) => {
+                            ns.forEach((n) => {
                                 if (!filtered.has(n.appName)) {
-                                    let icon: string | Gio.Icon = n.appIcon;
+                                    let icon: string = n.appIcon;
                                     if (icon === "") {
                                         icon = "applications-system-symbolic";
-                                        const desktop = Gio.DesktopAppInfo.new(n.desktopEntry);
-                                        const gicon = desktop.get_icon();
-                                        if (gicon) icon = gicon!;
+                                        const desktop = apps.find(
+                                            (d) =>
+                                                d.get_entry() ===
+                                                n.desktopEntry.toLowerCase() + ".desktop"
+                                        );
+                                        if (desktop) icon = desktop.iconName;
                                     }
                                     filtered.set(n.appName, {
                                         appName: n.appName,

@@ -4,15 +4,12 @@ import {
     createRoundedMask,
     getHyprlandGaps,
     getHyprlandRounding,
-    getHyprloandOption,
     setHoverClassName,
 } from "../utils";
-import { Binding, idle, timeout, Variable } from "astal";
+import { AstalIO, Gio, idle, timeout, Variable } from "astal";
 import Pango from "gi://Pango?version=1.0";
 import { Space } from "./base";
-import { BindableChild } from "astal/gtk3/astalify";
 import TransitionInOut from "./base/transition-in-out";
-// TODO 播放声音
 function Notification({
     n,
     gaps,
@@ -24,17 +21,24 @@ function Notification({
 }) {
     let isClosed = false;
     let box: Widget.Box = null as any;
-    let onHover = false;
-    const duration = 100;
+    let onHover = Variable(false);
+    let clouseTimeout: AstalIO.Time | null = null;
+    const duration = 600;
     const close = () => {
-        if (isClosed || onHover) return;
+        if (isClosed || onHover.get()) return;
         isShow.set(false);
         timeout(duration, () => idle(() => box.destroy()));
         isClosed = true;
     };
     const isShow = Variable(false);
+    // BUG: 当鼠标移到两条消息的边界时，会产生抖动
     return (
-        <TransitionInOut isShow={isShow()} duration={duration}>
+        <TransitionInOut
+            isShow={isShow()}
+            duration={duration}
+            transitionIn={Gtk.RevealerTransitionType.SLIDE_UP} // BUG: 当使用 SLIDE_RIGHT 时，Label 无法省略，超出宽度
+            transitionOut={Gtk.RevealerTransitionType.SLIDE_DOWN}
+        >
             <box
                 setup={(self) => {
                     idle(() => isShow.set(true));
@@ -58,16 +62,19 @@ function Notification({
                     setup={(self) => setHoverClassName(self, "PopupWindowItem")}
                     onClick={(self, e) => {
                         if (e.button !== Astal.MouseButton.PRIMARY) return;
-                        onHover = false;
+                        onHover.set(false);
                         close();
                         n.actions.forEach((a) => {
                             if (a.id === "default") n.invoke(a.id);
                         });
                     }}
-                    onHover={() => (onHover = true)}
+                    onHover={() => {
+                        clouseTimeout?.cancel();
+                        onHover.set(true);
+                    }}
                     onHoverLost={() => {
-                        onHover = false;
-                        timeout(3000, () => {
+                        onHover.set(false);
+                        clouseTimeout = timeout(3000, () => {
                             close();
                         });
                     }}
@@ -92,7 +99,7 @@ function Notification({
                                 `}
                             />
                             <box vertical={true} halign={Gtk.Align.START} marginStart={12}>
-                                <box hexpand={true}>
+                                <box hexpand={true} widthRequest={100}>
                                     <label
                                         label={n.summary}
                                         css={"font-size: 14px;"}
@@ -101,6 +108,7 @@ function Notification({
                                         wrapMode={Pango.WrapMode.CHAR}
                                     />
                                     <label
+                                        visible={onHover((b) => !b)}
                                         marginStart={4}
                                         label={n.appName}
                                         hexpand={true}
@@ -109,9 +117,19 @@ function Notification({
                                         valign={Gtk.Align.END}
                                     />
                                 </box>
-                                <Space space={2} useVertical={true} />
                                 <label
+                                    visible={onHover()}
+                                    label={n.appName}
+                                    hexpand={true}
+                                    css={"font-size: 12px; color: #888;"}
+                                    halign={Gtk.Align.START}
+                                    valign={Gtk.Align.END}
+                                />
+                                <label
+                                    marginStart={2}
+                                    visible={onHover((b) => !b)}
                                     label={n.body}
+                                    wrap={false}
                                     ellipsize={Pango.EllipsizeMode.END}
                                     css={"font-size: 12px; color: #e3e3e3;"}
                                     hexpand={true}
@@ -119,6 +137,21 @@ function Notification({
                                 />
                             </box>
                         </box>
+                        <revealer
+                            revealChild={onHover()}
+                            transitionDuration={300}
+                            transitionType={Gtk.RevealerTransitionType.SLIDE_DOWN}
+                        >
+                            <label
+                                marginTop={12}
+                                label={n.body}
+                                wrap={true}
+                                wrapMode={Pango.WrapMode.CHAR}
+                                css={"font-size: 12px; color: #e3e3e3;"}
+                                hexpand={true}
+                                halign={Gtk.Align.START}
+                            />
+                        </revealer>
                         <box
                             marginTop={12}
                             halign={Gtk.Align.FILL}
@@ -128,9 +161,10 @@ function Notification({
                             {n.actions.map((a) => {
                                 return (
                                     <button
+                                        hexpand={true}
                                         label={a.label}
                                         onClick={() => {
-                                            onHover = false;
+                                            onHover.set(false);
                                             close();
                                             n.invoke(a.id);
                                         }}

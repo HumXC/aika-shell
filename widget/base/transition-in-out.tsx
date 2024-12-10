@@ -31,7 +31,6 @@ export default function TransitionInOut({
                     }
                     self.transitionDuration = duration;
                     self.revealChild = false;
-
                     timeout(duration, () => {
                         child.transitionDuration = 0;
                         child.revealChild = false;
