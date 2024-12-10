@@ -261,3 +261,28 @@ export function createRoundedMask(
     cr.arc(x + radius, y + radius, radius, Math.PI, 1.5 * Math.PI); // Top-left corner
     cr.closePath();
 }
+const ControlKeys = [
+    Gdk.KEY_Return,
+    Gdk.KEY_Tab,
+    Gdk.KEY_space,
+    Gdk.KEY_Left,
+    Gdk.KEY_Right,
+    Gdk.KEY_Up,
+    Gdk.KEY_Down,
+    Gdk.KEY_Page_Up,
+    Gdk.KEY_Page_Down,
+    Gdk.KEY_Home,
+    Gdk.KEY_End,
+    Gdk.KEY_Shift_L,
+    Gdk.KEY_Shift_R,
+    Gdk.KEY_Control_L,
+    Gdk.KEY_Control_R,
+    Gdk.KEY_Alt_L,
+    Gdk.KEY_Alt_R,
+    Gdk.KEY_Super_L,
+    Gdk.KEY_Super_R,
+    Gdk.KEY_Menu,
+];
+export function isControlKey(keyval: number) {
+    return ControlKeys.includes(keyval);
+}

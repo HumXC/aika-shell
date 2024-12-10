@@ -53,7 +53,14 @@ export default function VolumeIcon({
                 setup={(self) => {
                     setHoverClassName(self, "Icon");
                     if (onlyIcon) return;
-                    SetupTooltip(self, VolumeTooltip, "volume-tooltip", "bottom", currentPopup);
+                    SetupTooltip(
+                        self,
+                        VolumeTooltip,
+                        "volume-tooltip",
+                        "bottom",
+                        currentPopup,
+                        600
+                    );
                     SetupPopup(self, VolumePopup, "volume-popup", "bottom", currentPopup);
                 }}
                 iconName={bind(wp.defaultSpeaker, "volumeIcon")}

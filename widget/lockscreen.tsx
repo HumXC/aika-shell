@@ -20,7 +20,7 @@ function auth(password: string): Promise<void> {
 class LockScreenConfig {
     wallpaper: string = "";
 }
-
+// TODO： 使用 Stack 布局
 export default function LockScreen() {
     let wallpaper = GetConfig(LockScreenConfig, "lockscreen").wallpaper;
     if (wallpaper !== "") {
@@ -111,7 +111,7 @@ export default function LockScreen() {
                 margin: 64px 10px 12px 10px;
                 background-color: rgba(0, 0, 0, 0.5);
                 border: 1px solid #fff;
-                box-shadow: 0 0 2px #000;
+                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
             `}
         />
     ) as Gtk.Entry;
@@ -135,12 +135,14 @@ export default function LockScreen() {
                             background-repeat: no-repeat;
                             background-position: center;
                             border-radius: 100%;
-                            box-shadow: 0 0 10px #000;
+                            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
                         `}
                     />
                     <label
                         label={GLib.get_user_name()}
-                        css={"font-size: 32px; margin-top: 12px; text-shadow: 0 0 5px #000;"}
+                        css={
+                            "font-size: 32px; margin-top: 12px; text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);"
+                        }
                     />
                     <box vertical={true}>
                         {entry}

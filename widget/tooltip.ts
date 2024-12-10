@@ -6,7 +6,8 @@ export function SetupTooltip(
     popupWindow: (props: any) => Astal.Window,
     popupName: string,
     forward: "bottom" | "top" | "left" | "right",
-    currentPopup?: Variable<string> | null
+    currentPopup?: Variable<string> | null,
+    delay: number = 0
 ) {
     let popup: Astal.Window | null = null;
     let closeTimer: AstalIO.Time | null = null;
@@ -35,6 +36,13 @@ export function SetupTooltip(
         });
     };
     self.connect("hover", () => {
+        onHover = true;
+        timeout(delay, () => {
+            if (currentPopup?.get().endsWith("-popup")) return;
+            if (onHover && !popup) popup = makePopup(self);
+        });
+    });
+    self.connect("scroll", () => {
         if (currentPopup?.get().endsWith("-popup")) return;
         onHover = true;
         if (!popup) popup = makePopup(self);

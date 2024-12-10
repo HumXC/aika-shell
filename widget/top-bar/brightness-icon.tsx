@@ -31,7 +31,14 @@ export default function BrightnessIcon({
                 });
                 setHoverClassName(self, "Icon");
                 if (onlyIcon) return;
-                SetupTooltip(self, BrightnessTooltip, "brightness-tooltip", "bottom", currentPopup);
+                SetupTooltip(
+                    self,
+                    BrightnessTooltip,
+                    "brightness-tooltip",
+                    "bottom",
+                    currentPopup,
+                    600
+                );
                 SetupPopup(self, BrightnessPopup, "brightness-popup", "bottom", currentPopup);
             }}
             iconName={bind(iconName)}

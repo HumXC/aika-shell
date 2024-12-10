@@ -28,7 +28,7 @@ export default function Workspace({ height }: { height: number }) {
                                         ws === fw ? itemSize * 2 : itemSize
                                     )}
                                     className={bind(hypr, "focusedWorkspace").as((fw) =>
-                                        ws === fw ? "Item-focused" : "Item"
+                                        ws === fw ? "Item Item-focused" : "Item"
                                     )}
                                 />
                             </box>

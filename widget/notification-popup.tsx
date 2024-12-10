@@ -12,7 +12,7 @@ import Pango from "gi://Pango?version=1.0";
 import { Space } from "./base";
 import { BindableChild } from "astal/gtk3/astalify";
 import TransitionInOut from "./base/transition-in-out";
-
+// TODO 播放声音
 function Notification({
     n,
     gaps,

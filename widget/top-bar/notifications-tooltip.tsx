@@ -1,9 +1,11 @@
 import { Astal, Gtk, Widget } from "astal/gtk3";
 import PopupWindow from "../base/popup-window";
-import { bind, idle } from "astal";
+import { bind, Gio, idle } from "astal";
 import { EventIcon, Space } from "../base";
 import Notifd from "gi://AstalNotifd";
 import { createRoundedMask, getHyprlandRounding, setHoverClassName } from "../../utils";
+
+// TODO: 通过 Desktop Entry 获取图标
 function Item({
     notifd,
     appName,
@@ -12,7 +14,7 @@ function Item({
 }: {
     notifd: Notifd.Notifd;
     appName: string;
-    appIcon: string;
+    appIcon: string | Gio.Icon;
     count: number;
 }) {
     const rounding = getHyprlandRounding();
@@ -46,10 +48,15 @@ function Item({
                         <box>
                             <box className={"NotificationIcon"}>
                                 <icon
+                                    iconSize={64}
                                     css={`
                                         font-size: 38px;
                                     `}
-                                    icon={appIcon === "" ? "applications-system-symbolic" : appIcon}
+                                    setup={(self) => {
+                                        if (appIcon instanceof Gio.Icon) {
+                                            self.gIcon = appIcon;
+                                        } else self.icon = appIcon;
+                                    }}
                                 />
                             </box>
                             <Space space={10} />
@@ -145,13 +152,20 @@ export default function NotificationTooltip({
                         {(() => {
                             const filtered = new Map<
                                 string,
-                                { appName: string; appIcon: string; count: number }
+                                { appName: string; appIcon: string | Gio.Icon; count: number }
                             >();
                             notifd.notifications.forEach((n) => {
                                 if (!filtered.has(n.appName)) {
+                                    let icon: string | Gio.Icon = n.appIcon;
+                                    if (icon === "") {
+                                        icon = "applications-system-symbolic";
+                                        const desktop = Gio.DesktopAppInfo.new(n.desktopEntry);
+                                        const gicon = desktop.get_icon();
+                                        if (gicon) icon = gicon!;
+                                    }
                                     filtered.set(n.appName, {
                                         appName: n.appName,
-                                        appIcon: n.appIcon,
+                                        appIcon: icon,
                                         count: 0,
                                     });
                                 }

@@ -79,13 +79,8 @@ box.Workspace {
         background: rgba(255, 255, 255, 0.157);
         border-radius: 50px;
     }
-    .Item-hover {
-        background: $selected_color;
-        border-radius: 50px;
-    }
     .Item-focused {
         background: $base_fg_color;
-        border-radius: 50px;
     }
 }
 box.RecorderIcon {

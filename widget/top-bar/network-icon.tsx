@@ -57,7 +57,14 @@ export default function NetworkIcon({
                 setup={(self) => {
                     setHoverClassName(self, "Icon");
                     if (onlyIcon) return;
-                    SetupTooltip(self, NetworkTooltip, "network-tooltip", "bottom", currentPopup);
+                    SetupTooltip(
+                        self,
+                        NetworkTooltip,
+                        "network-tooltip",
+                        "bottom",
+                        currentPopup,
+                        600
+                    );
                 }}
             />
         </box>
