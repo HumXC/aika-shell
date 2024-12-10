@@ -61,12 +61,16 @@ function Notification({
                     `}
                     setup={(self) => setHoverClassName(self, "PopupWindowItem")}
                     onClick={(self, e) => {
-                        if (e.button !== Astal.MouseButton.PRIMARY) return;
-                        onHover.set(false);
-                        close();
-                        n.actions.forEach((a) => {
-                            if (a.id === "default") n.invoke(a.id);
-                        });
+                        if (e.button === Astal.MouseButton.PRIMARY) {
+                            onHover.set(false);
+                            close();
+                            n.actions.forEach((a) => {
+                                if (a.id === "default") n.invoke(a.id);
+                            });
+                        } else {
+                            onHover.set(false);
+                            close();
+                        }
                     }}
                     onHover={() => {
                         clouseTimeout?.cancel();
