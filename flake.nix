@@ -64,6 +64,7 @@
         packages =
           rec {
             default = aika-shell;
+            astal = agsPkgs.io;
             aika-shell = inputs.ags.lib.bundle {
               inherit pkgs;
               src = ./.;
