@@ -33,7 +33,7 @@
           greet
           pkgs.imagemagick
         ];
-        ags = inputs.ags.packages.${system}.default.override {
+        ags = agsPkgs.default.override {
           extraPackages = aika-shell-pkgs ++ aika-greet-pkgs;
         };
         tsconfig = ''
@@ -61,7 +61,7 @@
 
       in
       {
-        packages.${system} =
+        packages =
           rec {
             default = aika-shell;
             aika-shell = inputs.ags.lib.bundle {
