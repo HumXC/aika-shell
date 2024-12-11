@@ -11,27 +11,30 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        gjs = inputs.ags.packages.${pkgs.system}.gjs;
-        extraPackages = with inputs.ags.packages.${pkgs.system};
-          [
-            astal3
-            astal4
-            io
-            gjs
-            tray
-            network
-            hyprland
-            wireplumber
-            bluetooth
-            notifd
-            auth
-            apps
-            pkgs.gtk-session-lock
-            pkgs.imagemagick
-            pkgs.wtype
-          ];
+        agsPkgs = inputs.ags.packages.${system};
+        aika-shell-pkgs = with agsPkgs; [
+          astal3
+          astal4
+          io
+          gjs
+          tray
+          network
+          hyprland
+          wireplumber
+          bluetooth
+          notifd
+          auth
+          apps
+          pkgs.gtk-session-lock
+          pkgs.imagemagick
+          pkgs.wtype
+        ];
+        aika-greeter-pkgs = with agsPkgs; [
+          greet
+          pkgs.getent
+        ];
         ags = inputs.ags.packages.${system}.default.override {
-          extraPackages = extraPackages;
+          extraPackages = aika-shell-pkgs ++ aika-greeter-pkgs;
         };
         tsconfig = ''
           {
@@ -43,31 +46,41 @@
                   "module": "ES2022",
                   "moduleResolution": "Bundler",
                   "jsx": "react-jsx",
-                  "jsxImportSource": "${gjs}/share/astal/gjs/gtk3",
+                  "jsxImportSource": "${agsPkgs.gjs}/share/astal/gjs/gtk3",
                   "paths": {
                       "astal": [
-                          "${gjs}/share/astal/gjs"
+                          "${agsPkgs.gjs}/share/astal/gjs"
                       ],
                       "astal/*": [
-                          "${gjs}/share/astal/gjs/*"
+                          "${agsPkgs.gjs}/share/astal/gjs/*"
                       ]
                   },
               }
           }
         '';
+
       in
       {
-        packages.${system}.default = inputs.ags.lib.bundle {
-          inherit pkgs;
-          src = ./.;
-          name = "my-shell"; # name of executable
-          entry = "app.ts";
-          extraPackages = extraPackages ++ [ pkgs.gjs ];
-        };
+        packages.${system} =
+          rec {
+            default = aika-shell;
+            aika-shell = inputs.ags.lib.bundle {
+              inherit pkgs;
+              src = ./.;
+              name = "aika-shell";
+              entry = "app.ts";
+              extraPackages = aika-shell-pkgs;
+            };
+            aika-greeter = inputs.ags.lib.bundle {
+              inherit pkgs;
+              src = ./.;
+              name = "aika-greeter";
+              entry = "greeter.tsx";
+              extraPackages = aika-greeter-pkgs;
+            };
+          };
         devShells.default = pkgs.mkShell {
-          buildInputs = [
-            ags
-          ];
+          buildInputs = [ ags ];
           shellHook = ''
             rm tsconfig.json
             cat << EOF > tsconfig.json
