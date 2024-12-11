@@ -1,9 +1,8 @@
-import { AstalIO, bind, Binding, exec, execAsync, GLib, idle, timeout, Variable } from "astal";
-import { Gdk, Gtk } from "astal/gtk3";
+import { AstalIO, bind, exec, execAsync, GLib, idle, timeout, Variable } from "astal";
+import { Gdk, Gtk, Widget } from "astal/gtk3";
 import Auth from "gi://AstalAuth";
 import { Clock } from "./top-bar";
 import { GetConfig } from "../configs";
-import { BindableChild } from "astal/gtk3/astalify";
 
 function auth(password: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -20,7 +19,6 @@ function auth(password: string): Promise<void> {
 class LockScreenConfig {
     wallpaper: string = "";
 }
-// TODO： 使用 Stack 布局
 export default function LockScreen() {
     let wallpaper = GetConfig(LockScreenConfig, "lockscreen").wallpaper;
     if (wallpaper !== "") {
@@ -43,7 +41,7 @@ export default function LockScreen() {
         "magick",
         wallpaper,
         "-resize",
-        "30%",
+        "10%",
         "-gaussian-blur",
         "18x6",
         "/tmp/lockscreen-blur.jpg",
@@ -59,7 +57,7 @@ export default function LockScreen() {
         <box
             onDestroy={() => {
                 if (blurWallpaper !== "") {
-                    execAsync(["rm", "-f", blurWallpaper]);
+                    idle(() => execAsync(["rm", "-f", blurWallpaper]));
                 }
             }}
             css={bind(inputState).as((s) => {
@@ -78,29 +76,24 @@ export default function LockScreen() {
             `;
             })}
         >
-            <centerbox hexpand={true}>
-                <box />
-                <revealer
-                    css={`
-                        padding-bottom: 600px;
-                        text-shadow: 0 0 5px #000;
-                    `}
-                    transitionType={Gtk.RevealerTransitionType.CROSSFADE}
-                    setup={(self) => {
-                        self.hook(bind(inputState), (_, t) => {
-                            if (!t) self.transitionDuration = animateDuration / 2;
-                            else self.transitionDuration = animateDuration * 1.5;
-                        });
-                    }}
-                    revealChild={inputState().as((t) => {
-                        return !t;
-                    })}
-                >
-                    <Clock fontSize={128} fontWeight="normal" />
-                </revealer>
-
-                <box />
-            </centerbox>
+            <revealer
+                marginBottom={600}
+                css={"text-shadow: 0 0 5px #000;"}
+                transitionType={Gtk.RevealerTransitionType.CROSSFADE}
+                setup={(self) => {
+                    self.hook(bind(inputState), (_, t) => {
+                        if (!t) self.transitionDuration = animateDuration / 2;
+                        else self.transitionDuration = animateDuration * 1.5;
+                    });
+                }}
+                revealChild={inputState().as((t) => {
+                    return !t;
+                })}
+                hexpand={true}
+                vexpand={true}
+            >
+                <Clock fontSize={128} fontWeight="normal" />
+            </revealer>
         </box>
     );
     const entry = (
@@ -108,27 +101,27 @@ export default function LockScreen() {
             visibility={false}
             css={`
                 border-radius: 20px;
-                margin: 64px 10px 12px 10px;
-                background-color: rgba(0, 0, 0, 0.5);
-                border: 1px solid #fff;
+                background-color: rgba(0, 0, 0, 0.3);
+                border: 1px solid rgba(255, 255, 255, 0.5);
                 box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+                padding-left: 12px;
+                padding-right: 30px;
             `}
         />
     ) as Gtk.Entry;
     const inputPage = (
         <box
             className={"LockScreen"}
-            css={`
-                background-color: rgba(0, 0, 0, 0.5);
-            `}
+            css={"background-color: rgba(0, 0, 0, 0.5);"}
+            hexpand={true}
+            vexpand={true}
         >
-            <centerbox vertical={true} hexpand={true} halign={Gtk.Align.CENTER}>
-                <box />
-                <box halign={Gtk.Align.CENTER} css={"padding-bottom: 128px;"} vertical={true}>
+            <box halign={Gtk.Align.CENTER} valign={Gtk.Align.CENTER} hexpand={true} vexpand={true}>
+                <box vertical={true} spacing={20}>
                     <box
                         vexpand={false}
-                        heightRequest={200}
-                        widthRequest={200}
+                        heightRequest={220}
+                        widthRequest={220}
                         css={`
                             background-image: url("${GLib.get_home_dir()}/.face");
                             background-size: cover;
@@ -140,24 +133,48 @@ export default function LockScreen() {
                     />
                     <label
                         label={GLib.get_user_name()}
-                        css={
-                            "font-size: 32px; margin-top: 12px; text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);"
-                        }
+                        css={"font-size: 30px;text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);"}
                     />
                     <box vertical={true}>
-                        {entry}
+                        <overlay>
+                            {entry}
+                            <icon
+                                icon={"arrow-right"}
+                                heightRequest={24}
+                                widthRequest={24}
+                                halign={Gtk.Align.END}
+                                marginEnd={6}
+                            />
+                        </overlay>
                         <label halign={Gtk.Align.CENTER} label={err()} />
                     </box>
+                    <box heightRequest={20} />
                 </box>
-                <box />
-            </centerbox>
+            </box>
         </box>
     );
+    let stack: Widget.Stack = null as any;
     const window = new Gtk.Window({
         child: (
-            <overlay
-                className={"LockScreen"}
-                overlay={
+            <stack
+                transitionDuration={animateDuration}
+                transitionType={Gtk.StackTransitionType.SLIDE_DOWN}
+                homogeneous={true}
+                setup={(self) => {
+                    stack = self;
+                    idle(() => {
+                        self.shown = "lockscreen";
+                    });
+                }}
+            >
+                <box name={"empty"} />
+                <overlay
+                    name={"lockscreen"}
+                    className={"LockScreen"}
+                    halign={Gtk.Align.FILL}
+                    valign={Gtk.Align.FILL}
+                >
+                    {background}
                     <revealer
                         transitionDuration={animateDuration}
                         transitionType={Gtk.RevealerTransitionType.CROSSFADE}
@@ -165,10 +182,8 @@ export default function LockScreen() {
                     >
                         {inputPage}
                     </revealer>
-                }
-            >
-                {background}
-            </overlay>
+                </overlay>
+            </stack>
         ),
     });
     let revealing = false;
@@ -184,6 +199,9 @@ export default function LockScreen() {
             if (!inputState.get()) {
                 t = animateDuration * 1.5; // 时钟的关闭时间是1.5倍于背景的打开时间
             }
+            timer = timeout(t, () => {
+                revealing = false;
+            });
             idle(() => {
                 entry.text = "";
                 err.set("");
@@ -191,9 +209,6 @@ export default function LockScreen() {
                     entry.editable = true;
                     entry.grab_focus();
                 }
-            });
-            timer = timeout(t, () => {
-                revealing = false;
             });
         };
         if (canReveal && e.get_keyval()[1] === Gdk.KEY_Escape && inputState.get()) {
@@ -212,7 +227,9 @@ export default function LockScreen() {
             canReveal = false;
             auth(password)
                 .then(() => {
-                    self.destroy();
+                    stack.transitionType = Gtk.StackTransitionType.SLIDE_UP;
+                    stack.shown = "empty";
+                    timeout(animateDuration, () => self.destroy());
                 })
                 .catch((error) => {
                     err.set(error.message);
@@ -225,6 +242,9 @@ export default function LockScreen() {
                 });
         }
     });
-
+    const cssProvider = new Gtk.CssProvider();
+    cssProvider.load_from_data("window { background: transparent;}");
+    const context = window.get_style_context();
+    context.add_provider(cssProvider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
     return window;
 }
