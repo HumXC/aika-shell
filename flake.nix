@@ -75,7 +75,7 @@
             aika-greet = inputs.ags.lib.bundle {
               inherit pkgs;
               src = ./.;
-              name = "aika-greeter";
+              name = "aika-greet";
               entry = "greet.tsx";
               extraPackages = aika-greet-pkgs;
             };

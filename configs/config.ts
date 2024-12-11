@@ -41,6 +41,7 @@ function GetAny(key: string): any {
     class AnyClass {}
     return Get(AnyClass, key);
 }
+// TODO: Remove this
 export class MapConfig<T> extends Map<string, T> {
     constructor(defaultValue?: { [key: string]: T }) {
         super();
@@ -62,6 +63,7 @@ export class MapConfig<T> extends Map<string, T> {
         }
     }
 }
+// TODO: Remove this
 export class ArrayConfig<T> extends Array<T> {
     fromJSON(arr: any) {
         for (let item of arr) {
