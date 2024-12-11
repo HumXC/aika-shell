@@ -1,6 +1,6 @@
 import ATray from "gi://AstalTray";
 import { App, Astal, Gdk } from "astal/gtk3";
-import { bind } from "astal";
+import { bind, idle } from "astal";
 import { GetConfig } from "../../configs";
 class Config {
     icon: {
@@ -36,9 +36,11 @@ export default function Tray({ height }: { height: number }) {
                     const item = items.find((i) => i.id === id);
                     if (item) sorted.push(item);
                 });
-                items.forEach((item) => {
-                    if (!sorted.includes(item)) sorted.push(item);
-                });
+                items
+                    .filter((i) => i.gicon !== null)
+                    .forEach((item) => {
+                        if (!sorted.includes(item)) sorted.push(item);
+                    });
                 return sorted.map((item) => {
                     if (item.iconThemePath) App.add_icons(item.iconThemePath);
                     const menu = item.create_menu();
@@ -55,7 +57,8 @@ export default function Tray({ height }: { height: number }) {
                             onHover={(self) => (self.className = "TrayItem-hover")}
                             onHoverLost={(self) => (self.className = "TrayItem")}
                             onClickRelease={(self, e) => {
-                                if (e.button === Astal.MouseButton.PRIMARY) item.activate(e.x, e.y);
+                                if (e.button === Astal.MouseButton.PRIMARY)
+                                    idle(() => item.activate(e.x, e.y));
                                 if (e.button === Astal.MouseButton.SECONDARY) {
                                     menu?.popup_at_widget(
                                         self,

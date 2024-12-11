@@ -1,23 +1,25 @@
 import { Astal, Gtk, Widget } from "astal/gtk3";
 import Notifd from "gi://AstalNotifd";
 import {
+    AsyncMutex,
     createRoundedMask,
     getHyprlandGaps,
     getHyprlandRounding,
     setHoverClassName,
 } from "../utils";
-import { AstalIO, Gio, idle, timeout, Variable } from "astal";
+import { AstalIO, idle, timeout, Variable } from "astal";
 import Pango from "gi://Pango?version=1.0";
-import { Space } from "./base";
 import TransitionInOut from "./base/transition-in-out";
 function Notification({
     n,
     gaps,
     rounding,
+    lock,
 }: {
     n: Notifd.Notification;
     gaps: number[];
     rounding: number;
+    lock: AsyncMutex;
 }) {
     let isClosed = false;
     let box: Widget.Box = null as any;
@@ -27,17 +29,17 @@ function Notification({
     const close = () => {
         if (isClosed || onHover.get()) return;
         isShow.set(false);
-        timeout(duration, () => idle(() => box.destroy()));
         isClosed = true;
     };
     const isShow = Variable(false);
-    // BUG: 当鼠标移到两条消息的边界时，会产生抖动
     return (
         <TransitionInOut
             isShow={isShow()}
             duration={duration}
             transitionIn={Gtk.RevealerTransitionType.SLIDE_UP} // BUG: 当使用 SLIDE_RIGHT 时，Label 无法省略，超出宽度
             transitionOut={Gtk.RevealerTransitionType.SLIDE_DOWN}
+            onTransitionStart={async () => await lock.lock()}
+            onTransitionEnd={() => lock.unlock()}
         >
             <box
                 setup={(self) => {
@@ -130,9 +132,8 @@ function Notification({
                                     valign={Gtk.Align.END}
                                 />
                                 <label
-                                    marginStart={2}
                                     visible={onHover((b) => !b)}
-                                    label={n.body}
+                                    label={n.body.split("\n")[0]}
                                     wrap={false}
                                     ellipsize={Pango.EllipsizeMode.END}
                                     css={"font-size: 12px; color: #e3e3e3;"}
@@ -186,6 +187,7 @@ export default function NotifactionPopup({ notificationID: id }: { notificationI
     const notifd = Notifd.get_default();
     const gaps = getHyprlandGaps();
     const rounding = getHyprlandRounding();
+    const lock = new AsyncMutex();
     return (
         <window
             title={"NotificationPopup"}
@@ -202,12 +204,19 @@ export default function NotifactionPopup({ notificationID: id }: { notificationI
                     });
                     self.hook(notifd, "notified", (_, id) => {
                         if (notifd.dontDisturb) return;
-                        self.add(Notification({ n: notifd.get_notification(id), gaps, rounding }));
+                        self.add(
+                            Notification({ n: notifd.get_notification(id), gaps, rounding, lock })
+                        );
                     });
                 }}
                 vertical={true}
             >
-                <Notification n={notifd.get_notification(id)} gaps={gaps} rounding={rounding} />
+                <Notification
+                    n={notifd.get_notification(id)}
+                    gaps={gaps}
+                    rounding={rounding}
+                    lock={lock}
+                />
             </box>
         </window>
     );

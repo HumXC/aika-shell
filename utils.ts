@@ -286,3 +286,32 @@ const ControlKeys = [
 export function isControlKey(keyval: number) {
     return ControlKeys.includes(keyval);
 }
+export class AsyncMutex {
+    queue: (() => void)[] = [];
+    locked = false;
+
+    async lock() {
+        return new Promise<void>((resolve) => {
+            const tryAcquire = () => {
+                if (!this.locked) {
+                    this.locked = true;
+                    resolve();
+                } else {
+                    this.queue.push(tryAcquire);
+                }
+            };
+            tryAcquire();
+        });
+    }
+
+    unlock() {
+        if (!this.locked) {
+            throw new Error("Cannot unlock a mutex that is not locked");
+        }
+        this.locked = false;
+        if (this.queue.length > 0) {
+            const next = this.queue.shift()!;
+            next();
+        }
+    }
+}
