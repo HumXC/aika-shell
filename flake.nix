@@ -29,12 +29,12 @@
           pkgs.imagemagick
           pkgs.wtype
         ];
-        aika-greeter-pkgs = with agsPkgs; [
+        aika-greet-pkgs = with agsPkgs; [
           greet
-          pkgs.getent
+          pkgs.imagemagick
         ];
         ags = inputs.ags.packages.${system}.default.override {
-          extraPackages = aika-shell-pkgs ++ aika-greeter-pkgs;
+          extraPackages = aika-shell-pkgs ++ aika-greet-pkgs;
         };
         tsconfig = ''
           {
@@ -71,12 +71,12 @@
               entry = "app.ts";
               extraPackages = aika-shell-pkgs;
             };
-            aika-greeter = inputs.ags.lib.bundle {
+            aika-greet = inputs.ags.lib.bundle {
               inherit pkgs;
               src = ./.;
               name = "aika-greeter";
-              entry = "greeter.tsx";
-              extraPackages = aika-greeter-pkgs;
+              entry = "greet.tsx";
+              extraPackages = aika-greet-pkgs;
             };
           };
         devShells.default = pkgs.mkShell {
