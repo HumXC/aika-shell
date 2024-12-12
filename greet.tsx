@@ -118,25 +118,19 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                             }
                         } else {
                             isAuth.set(true);
-                            try {
-                                Greet.login(session[0], entry.get_text(), session[1], (_, res) => {
-                                    try {
-                                        Greet.login_finish(res);
-                                    } catch (e: any) {
-                                        err.set_text(e.message);
-                                        entry.grab_focus();
-                                        entry.select_region(0, -1);
-                                    } finally {
-                                        isAuth.set(false);
-                                    }
-                                });
-                                isDone.set(true);
-                                timeout(dration, () => App.quit());
-                            } catch (e: any) {
-                                err.set_text(e.message);
-                                entry.grab_focus();
-                                entry.select_region(0, -1);
-                            }
+                            Greet.login(session[0], entry.get_text(), session[1], (_, res) => {
+                                try {
+                                    print(_, res);
+                                    Greet.login_finish(res);
+                                    timeout(dration, () => App.quit());
+                                } catch (e: any) {
+                                    err.set_text(e.message);
+                                    entry.grab_focus();
+                                    entry.select_region(0, -1);
+                                } finally {
+                                    isAuth.set(false);
+                                }
+                            });
                         }
                     }
                 }
