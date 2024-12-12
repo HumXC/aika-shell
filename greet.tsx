@@ -72,9 +72,9 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
             "10%",
             "-gaussian-blur",
             "18x6",
-            "/tmp/greet-blur.jpg",
+            "/home/greeter/greet-blur.jpg",
         ])
-            .then(() => bluredWallpaper.set("/tmp/greet-blur.jpg"))
+            .then(() => bluredWallpaper.set("/home/greeter/greet-blur.jpg"))
             .catch((e) => {
                 console.error(e);
             });
@@ -254,6 +254,7 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                                         box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
                                         padding-left: 12px;
                                         padding-right: 30px;
+                                        color: white;
                                     `}
                                 />
                                 <icon
