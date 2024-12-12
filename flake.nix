@@ -12,30 +12,7 @@
           inherit system;
         };
         agsPkgs = inputs.ags.packages.${system};
-        aika-shell-pkgs = with agsPkgs; [
-          astal3
-          astal4
-          io
-          gjs
-          tray
-          network
-          hyprland
-          wireplumber
-          bluetooth
-          notifd
-          auth
-          apps
-          pkgs.gtk-session-lock
-          pkgs.imagemagick
-          pkgs.wtype
-        ];
-        aika-greet-pkgs = with agsPkgs; [
-          greet
-          pkgs.imagemagick
-        ];
-        ags = agsPkgs.default.override {
-          extraPackages = aika-shell-pkgs ++ aika-greet-pkgs;
-        };
+
         tsconfig = ''
           {
               "\$schema": "https://json.schemastore.org/tsconfig",
@@ -60,28 +37,12 @@
         '';
 
       in
-      {
-        packages =
-          rec {
-            default = aika-shell;
-            astal = agsPkgs.io;
-            aika-shell = inputs.ags.lib.bundle {
-              inherit pkgs;
-              src = ./.;
-              name = "aika-shell";
-              entry = "app.ts";
-              extraPackages = aika-shell-pkgs;
-            };
-            aika-greet = inputs.ags.lib.bundle {
-              inherit pkgs;
-              src = ./.;
-              name = "aika-greet";
-              entry = "greet.tsx";
-              extraPackages = aika-greet-pkgs;
-            };
-          };
+      rec{
+        packages = import ./nix/packages.nix {
+          inherit agsPkgs pkgs inputs;
+        };
         devShells.default = pkgs.mkShell {
-          buildInputs = [ ags ];
+          buildInputs = [ packages.ags ];
           shellHook = ''
             rm tsconfig.json
             cat << EOF > tsconfig.json

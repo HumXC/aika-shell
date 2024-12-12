@@ -1,69 +1,136 @@
 #!/usr/bin/gjs -m
-import { bind, exec, execAsync, idle, timeout, Variable } from "astal";
+import { bind, exec, execAsync, Gio, GLib, idle, readFile, timeout, Variable } from "astal";
 import { App, Astal, Gdk, Gtk, Widget } from "astal/gtk3";
 import Greet from "gi://AstalGreet";
 import { Image } from "./widget/base";
 import { listDir, loadImage } from "./utils";
-
+function getUsers() {
+    const users: string[] = [];
+    readFile("/etc/passwd")
+        .split("\n")
+        .forEach((line) => {
+            const item = line.split(":");
+            if (parseInt(item[2]) >= 1000 && item[0] !== "nobody") users.push(item[0]);
+        });
+    return users;
+}
+function getSessions(folders: string[]) {
+    return exec(["find", ...folders, "-type", "f", "-o", "-type", "l", "-name", "*.desktop"])
+        .split("\n")
+        .map((d) => Gio.DesktopAppInfo.new_from_filename(d));
+}
+async function login(user: string, passwd: string, session: string, env: string[]) {
+    return new Promise<Error | null>((resolve) => {
+        const s = AllSessions.find((s) => s.get_name() === session)!;
+        Greet.login_with_env(user, passwd, s.get_executable(), env, (_, res) => {
+            try {
+                Greet.login_with_env_finish(res);
+                resolve(null);
+            } catch (e: any) {
+                resolve(e);
+            }
+        });
+    });
+}
+type Option = {
+    defaultUser: string;
+    defaultSession: string;
+    defaultMonitor: number;
+    wallpaperDir: string;
+    test: boolean;
+    env: string[];
+    sessionDirs: string[];
+};
+function parseArgs(args: string[]): Option {
+    function get<T extends string | number>(
+        i: number,
+        flag: string,
+        defaultValue: T
+    ): [value: T, index: number] {
+        if (args[i] === flag) {
+            if (typeof defaultValue === "number") {
+                return [parseInt(args[i + 1]) as T, i + 1];
+            } else {
+                return [args[i + 1] as T, i + 1];
+            }
+        }
+        return [defaultValue, i];
+    }
+    const result: Option = {
+        defaultUser: "",
+        defaultSession: "",
+        defaultMonitor: 0,
+        wallpaperDir: "/home/greeter/wallpaper",
+        test: false,
+        sessionDirs: [],
+        env: [],
+    };
+    for (let i = 0; i < args.length; i++) {
+        [result.defaultUser, i] = get(i, "-u", result.defaultUser);
+        [result.defaultSession, i] = get(i, "-s", result.defaultSession);
+        [result.defaultMonitor, i] = get(i, "-m", result.defaultMonitor);
+        [result.wallpaperDir, i] = get(i, "-w", result.wallpaperDir);
+        if (args[i] === "-test") result.test = true;
+        if (args[i] === "-e") {
+            result.env.push(args[i + 1]);
+            i++;
+        }
+        if (args[i] === "-d") {
+            result.sessionDirs.push(args[i + 1]);
+            i++;
+        }
+    }
+    if (result.sessionDirs.length === 0)
+        result.sessionDirs.push("/usr/share/xsessions", "/usr/share/wayland-sessions");
+    return result;
+}
 // ags run greeter.tsx -a -test -a -s -a <USER> -a <CMD>
-// aika-greet -s HumXC Hyprland
+// aika-greet -u <DEFAULT_USER> -e <NAME=value> -test -w <WALLPAPER_DIR> -m <MONITOR> -s <DEFAULT_SESSION>
 const User = Variable("");
+const Session_ = Variable("");
+const Monitor = Variable(0);
 const Session = new Map<string, string>();
-let WALLPAPER_DIR = "/home/greeter/wallpaper";
-exec(`mkdir -p ${WALLPAPER_DIR}`);
-let MONITOR = 0;
-let TEST = false;
-for (let i = 0; i < ARGV.length; i++) {
-    if (ARGV[i] === "-test") {
-        TEST = true;
-        continue;
-    }
-    if (ARGV[i] === "-m") {
-        MONITOR = parseInt(ARGV[i + 1]);
-        i++;
-        continue;
-    }
-    if (ARGV[i] === "-w") {
-        WALLPAPER_DIR = ARGV[i + 1];
-        i++;
-        continue;
-    }
-    if (ARGV[i] === "-s") {
-        Session.set(ARGV[i + 1], ARGV[i + 2]);
-        i += 2;
-        continue;
-    }
-}
-if (Session.size === 0) {
-    console.error("No session found.");
-    App.quit();
-}
-User.set(Session.entries().next().value![0]);
-const wallpapers = listDir(WALLPAPER_DIR, [".jpg", ".jpeg", ".png"]);
+const OPTION = parseArgs(ARGV);
+print(JSON.stringify(OPTION, null, 2));
+const AllSessions = getSessions(OPTION.sessionDirs);
+print(AllSessions.map((s) => "Session: " + s.get_name()).join("\n"));
+const Users = getUsers();
+Users.forEach((u) => {
+    if (u === OPTION.defaultUser) User.set(u);
+});
+print(Users.map((u) => "User: " + u).join("\n"));
+print(OPTION.env.map((e) => "Env: " + e).join("\n"));
+if (OPTION.defaultSession !== "") User.set(Users[0] ? Users[0] : "");
+if (OPTION.defaultMonitor !== 0) Monitor.set(OPTION.defaultMonitor);
+
+const Wallpapers = listDir(OPTION.wallpaperDir, [".jpg", ".jpeg", ".png"]);
+print("Find wallpapers number: " + Wallpapers.length);
+
 App.start({
     icons: `${SRC}/icons`,
     main() {
-        App.get_monitors().map((_, index) => Greeter(index, index === MONITOR, wallpapers));
+        App.get_monitors().map((_, index) => Greeter(index));
     },
 });
 const time = Variable("00:00").poll(1000, 'date +"%H:%M"');
-function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
+
+function Greeter(monitor: number) {
     const isInput = Variable(false);
-    const isMain = Variable(main); // 多屏幕场景使用
     const dration = 400;
     const wallpaper = Variable("");
     const bluredWallpaper = Variable("");
-    if (wallpapers.length > 0) {
-        const settingWallpaper = wallpapers.filter((w) => {
+    if (Wallpapers.length > 0) {
+        const settingWallpaper = Wallpapers.filter((w) => {
             const i = w.split("/").pop()?.split(".").shift();
             return i && parseInt(i) === monitor;
         });
         if (settingWallpaper.length > 0) {
             wallpaper.set(settingWallpaper[0]);
         } else {
-            wallpaper.set(wallpapers[Math.floor(Math.random() * wallpapers.length)]);
+            wallpaper.set(Wallpapers[Math.floor(Math.random() * Wallpapers.length)]);
         }
     }
+    const bluredWallpaperFile = `${OPTION.wallpaperDir}/greet-blur-${monitor}.jpg`;
     if (wallpaper.get() !== "")
         execAsync([
             "magick",
@@ -72,9 +139,9 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
             "10%",
             "-gaussian-blur",
             "18x6",
-            "/home/greeter/greet-blur.jpg",
+            bluredWallpaperFile,
         ])
-            .then(() => bluredWallpaper.set("/home/greeter/greet-blur.jpg"))
+            .then(() => bluredWallpaper.set(bluredWallpaperFile))
             .catch((e) => {
                 console.error(e);
             });
@@ -84,7 +151,7 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
     const isAuth = Variable(false);
     return (
         <window
-            onDestroy={() => execAsync(["rm", "/home/greeter/greet-blur.jpg"])}
+            onDestroy={() => execAsync(["rm", bluredWallpaperFile])}
             monitor={monitor}
             keymode={Astal.Keymode.EXCLUSIVE}
             anchor={
@@ -101,14 +168,13 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                 if (isDone.get() || isAuth.get()) return;
                 if (e.get_keyval()[1] === Gdk.KEY_Escape) {
                     if (isInput.get()) isInput.set(false);
-                    else if (!isInput.get() && TEST) App.quit();
+                    else if (!isInput.get() && OPTION.test) App.quit();
                 }
                 if (e.get_keyval()[1] === Gdk.KEY_Return) {
                     if (!isInput.get()) isInput.set(true);
                     else {
                         err.set_text("");
-                        const session = Session.entries().next().value!;
-                        if (TEST) {
+                        if (OPTION.test) {
                             if (entry.get_text() === "test") {
                                 isDone.set(true);
                                 timeout(dration, () => App.quit());
@@ -119,20 +185,19 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                             }
                         } else {
                             isAuth.set(true);
-                            Greet.login(session[0], entry.get_text(), session[1], (_, res) => {
-                                try {
-                                    Greet.login_finish(res);
-                                    isDone.set(true);
-                                    timeout(dration, () => App.quit());
-                                } catch (e: any) {
-                                    console.error(e);
-                                    err.set_text(e.message);
-                                    entry.grab_focus();
-                                    entry.select_region(0, -1);
-                                } finally {
-                                    isAuth.set(false);
-                                }
-                            });
+                            login(User.get(), entry.get_text(), Session_.get(), OPTION.env)
+                                .then((e) => {
+                                    if (e) {
+                                        console.error(e);
+                                        err.set_text(e.message);
+                                        entry.grab_focus();
+                                        entry.select_region(0, -1);
+                                    } else {
+                                        isDone.set(true);
+                                        timeout(dration, () => App.quit());
+                                    }
+                                })
+                                .finally(() => isAuth.set(false));
                         }
                     }
                 }
@@ -293,5 +358,18 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                 </revealer>
             </overlay>
         </window>
+    );
+}
+function Background({ monitor }: { monitor: number }) {
+    return (
+        <Image
+            file={w}
+            visible={isInput()}
+            setup={(self) => {
+                const { width, height } = self.get_display().get_monitor(monitor)!.get_geometry();
+                const pixbuf = loadImage(w, width, height);
+                self.pixbuf = pixbuf;
+            }}
+        />
     );
 }
