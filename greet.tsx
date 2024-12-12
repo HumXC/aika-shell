@@ -118,7 +118,7 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                             }
                         } else {
                             isAuth.set(true);
-                            Greet.login(session[0], entry.get_text(), session[1])
+                            Greet.login_with_env(session[0], entry.get_text(), session[1], [])
                                 .catch((e) => {
                                     console.error(e);
                                     err.set_text(e.message);
