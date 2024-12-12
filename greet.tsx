@@ -118,19 +118,20 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                             }
                         } else {
                             isAuth.set(true);
-                            Greet.login(session[0], entry.get_text(), session[1], (_, res) => {
-                                try {
-                                    print(_, res);
-                                    Greet.login_finish(res);
-                                    timeout(dration, () => App.quit());
-                                } catch (e: any) {
+                            Greet.login(session[0], entry.get_text(), session[1])
+                                .catch((e) => {
+                                    console.error(e);
                                     err.set_text(e.message);
                                     entry.grab_focus();
                                     entry.select_region(0, -1);
-                                } finally {
+                                })
+                                .then(() => {
+                                    isDone.set(true);
+                                    timeout(dration, () => App.quit());
+                                })
+                                .finally(() => {
                                     isAuth.set(false);
-                                }
-                            });
+                                });
                         }
                     }
                 }
