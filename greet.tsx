@@ -81,6 +81,7 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
     let entry: Gtk.Entry = null as any;
     let err: Widget.Label = null as any;
     const isDone = Variable(true);
+    const isAuth = Variable(false);
     return (
         <window
             monitor={monitor}
@@ -96,7 +97,7 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                 background: black;
             `}
             onKeyPressEvent={(self, e) => {
-                if (isDone.get()) return;
+                if (isDone.get() || isAuth.get()) return;
                 if (e.get_keyval()[1] === Gdk.KEY_Escape) {
                     if (isInput.get()) isInput.set(false);
                     else if (!isInput.get() && TEST) App.quit();
@@ -115,7 +116,8 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                                 entry.grab_focus();
                                 entry.select_region(0, -1);
                             }
-                        } else
+                        } else {
+                            isAuth.set(true);
                             Greet.login(session[0], entry.get_text(), session[1], (_, res) => {
                                 try {
                                     Greet.login_finish(res);
@@ -125,8 +127,11 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                                     err.set_text(e.message);
                                     entry.grab_focus();
                                     entry.select_region(0, -1);
+                                } finally {
+                                    isAuth.set(false);
                                 }
                             });
+                        }
                     }
                 }
             }}
@@ -228,7 +233,7 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                                 widthRequest={200}
                                 css={User(
                                     (u) => `
-                                    background-image: url("/home/${u}/.face");
+                                    background-image: url("/var/lib/AccountsService/icons/${u}");
                                     background-size: cover;
                                     background-repeat: no-repeat;
                                     background-position: center;
