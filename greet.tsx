@@ -2,11 +2,15 @@
 import { bind, exec, execAsync, Gio, GLib, idle, timeout, Variable } from "astal";
 import { App, Astal, Gdk, Gtk, Widget } from "astal/gtk3";
 import Greet from "gi://AstalGreet";
+import { Image } from "./widget/base";
+import GdkPixbuf from "gi://GdkPixbuf?version=2.0";
+
 // ags run greeter.tsx -a -test -a -s -a <USER> -a <CMD>
 // aika-greet -s HumXC Hyprland
 const User = Variable("");
 const Session = new Map<string, string>();
 let WALLPAPER_DIR = "/home/greeter/wallpaper";
+exec(`mkdir -p ${WALLPAPER_DIR}`);
 let MONITOR = 0;
 let TEST = false;
 for (let i = 0; i < ARGV.length; i++) {
@@ -87,6 +91,10 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                 Astal.WindowAnchor.RIGHT |
                 Astal.WindowAnchor.BOTTOM
             }
+            css={`
+                color: white;
+                background: black;
+            `}
             onKeyPressEvent={(self, e) => {
                 if (isDone.get()) return;
                 if (e.get_keyval()[1] === Gdk.KEY_Escape) {
@@ -133,34 +141,44 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
             }}
         >
             <overlay halign={Gtk.Align.FILL} valign={Gtk.Align.FILL}>
-                <box
-                    css={wallpaper(
-                        (w) => `
-                                background-image: url("${w}");
-                                background-size: cover;
-                                background-repeat: no-repeat;
-                                background-position: center;
-                            `
-                    )}
-                    hexpand={true}
-                    vexpand={true}
-                />
+                {wallpaper((w) => {
+                    if (w === "") return <box />;
+                    return (
+                        <Image
+                            setup={(self) => {
+                                const { width, height } = self
+                                    .get_display()
+                                    .get_monitor(monitor)!
+                                    .get_geometry();
+                                const pixbuf = loadImage(w, width, height);
+                                self.pixbuf = pixbuf;
+                            }}
+                        />
+                    );
+                })}
+
                 <revealer
                     transitionType={Gtk.RevealerTransitionType.CROSSFADE}
                     transitionDuration={dration}
                     revealChild={isInput()}
                 >
-                    <box
-                        css={bluredWallpaper(
-                            (w) => `
-                                background-image: url("${w}");
-                                background-size: cover;
-                                background-repeat: no-repeat;
-                                background-position: center;
-                            `
-                        )}
-                        visible={isInput()}
-                    />
+                    {bluredWallpaper((w) => {
+                        if (w === "") return <box />;
+                        return (
+                            <Image
+                                file={w}
+                                visible={isInput()}
+                                setup={(self) => {
+                                    const { width, height } = self
+                                        .get_display()
+                                        .get_monitor(monitor)!
+                                        .get_geometry();
+                                    const pixbuf = loadImage(w, width, height);
+                                    self.pixbuf = pixbuf;
+                                }}
+                            />
+                        );
+                    })}
                 </revealer>
                 <revealer
                     transitionType={Gtk.RevealerTransitionType.CROSSFADE}
@@ -239,11 +257,11 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                                     `}
                                 />
                                 <icon
-                                    icon={"arrow-right"}
-                                    heightRequest={24}
-                                    widthRequest={24}
+                                    icon={"builder-move-right-symbolic"}
+                                    css={"font-size: 16px;"}
                                     halign={Gtk.Align.END}
-                                    marginEnd={6}
+                                    marginEnd={12}
+                                    opacity={0.5}
                                 />
                             </overlay>
                             <box hexpand={true} />
@@ -258,6 +276,7 @@ function Greeter(monitor: number, main: boolean = true, wallpapers: string[]) {
                     </box>
                 </revealer>
                 <revealer
+                    receivesDefault={false}
                     transitionType={Gtk.RevealerTransitionType.CROSSFADE}
                     transitionDuration={dration}
                     revealChild={isDone()}
@@ -276,4 +295,33 @@ function listDir(folder: string, allowedFile: Array<string>): Array<string> {
     cmd.pop();
     files.push(...exec(cmd).split("\n"));
     return files;
+}
+function loadImage(file: string, target_width: number, target_height: number) {
+    let pixbuf = GdkPixbuf.Pixbuf.new_from_file(file);
+
+    let original_width = pixbuf.get_width();
+    let original_height = pixbuf.get_height();
+
+    let scale = Math.max(target_width / original_width, target_height / original_height);
+
+    let scaled_width = Math.round(original_width * scale);
+    let scaled_height = Math.round(original_height * scale);
+
+    let scaled_pixbuf = pixbuf.scale_simple(
+        scaled_width,
+        scaled_height,
+        GdkPixbuf.InterpType.BILINEAR
+    );
+
+    let offset_x = Math.floor((scaled_width - target_width) / 2);
+    let offset_y = Math.floor((scaled_height - target_height) / 2);
+
+    let cropped_pixbuf = scaled_pixbuf!.new_subpixbuf(
+        offset_x,
+        offset_y,
+        target_width,
+        target_height
+    );
+
+    return cropped_pixbuf;
 }
