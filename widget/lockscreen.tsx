@@ -1,8 +1,10 @@
-import { AstalIO, bind, exec, execAsync, GLib, idle, timeout, Variable } from "astal";
+import { AstalIO, bind, execAsync, GLib, idle, timeout, Variable } from "astal";
 import { Gdk, Gtk, Widget } from "astal/gtk3";
 import Auth from "gi://AstalAuth";
 import { Clock } from "./top-bar";
 import { GetConfig } from "../configs";
+import { listDir, loadImage } from "../utils";
+import { Image } from "./base";
 
 function auth(password: string): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -16,99 +18,36 @@ function auth(password: string): Promise<void> {
         });
     });
 }
+const time = Variable("00:00").poll(1000, 'date +"%H:%M"');
 class LockScreenConfig {
     wallpaper: string = "";
 }
-export default function LockScreen() {
-    let wallpaper = GetConfig(LockScreenConfig, "lockscreen").wallpaper;
-    if (wallpaper !== "") {
-        const allowImages = ["jpg", "jpeg", "png"];
-        const ext = wallpaper.split(".").pop()?.toLowerCase();
-        if (ext !== undefined && !allowImages.includes(ext)) {
-            try {
-                const images = exec(["ls", "-1", wallpaper])
-                    .split("\n")
-                    .filter((file) => {
-                        const ext = file.split(".").pop()?.toLowerCase();
-                        return ext !== undefined && allowImages.includes(ext);
-                    });
-                wallpaper += "/" + images[Math.floor(Math.random() * images.length)];
-            } catch (error) {}
-        }
+export default function LockScreen(monitor: Gdk.Monitor) {
+    const wallpaper = new Variable("");
+    const bluredWallpaper = new Variable("");
+    let wallpaperConfig = GetConfig(LockScreenConfig, "lockscreen").wallpaper;
+    if (wallpaperConfig !== "") {
+        const images = listDir(wallpaperConfig, ["jpg", "jpeg", "png"]);
+        wallpaper.set(images[Math.floor(Math.random() * images.length)]);
     }
-    let blurWallpaper = "";
     execAsync([
         "magick",
-        wallpaper,
+        wallpaper.get(),
         "-resize",
         "10%",
         "-gaussian-blur",
         "18x6",
         "/tmp/lockscreen-blur.jpg",
     ])
-        .then(() => (blurWallpaper = "/tmp/lockscreen-blur.jpg"))
+        .then(() => bluredWallpaper.set("/tmp/lockscreen-blur.jpg"))
         .catch((e) => {
             console.error(e);
         });
     const err = new Variable("");
-    const inputState = new Variable(false);
+    const isInput = new Variable(false);
     const animateDuration = 500;
-    const background = (
-        <box
-            onDestroy={() => {
-                if (blurWallpaper !== "") {
-                    idle(() => execAsync(["rm", "-f", blurWallpaper]));
-                }
-            }}
-            css={bind(inputState).as((s) => {
-                if (s && blurWallpaper !== "")
-                    return `
-                background-image: url("${blurWallpaper}");
-                background-size: cover;
-                background-repeat: no-repeat;
-                background-position: center;
-            `;
-                return `
-                background-image: url("${wallpaper}");
-                background-size: cover;
-                background-repeat: no-repeat;
-                background-position: center;
-            `;
-            })}
-        >
-            <revealer
-                marginBottom={600}
-                css={"text-shadow: 0 0 5px #000;"}
-                transitionType={Gtk.RevealerTransitionType.CROSSFADE}
-                setup={(self) => {
-                    self.hook(bind(inputState), (_, t) => {
-                        if (!t) self.transitionDuration = animateDuration / 2;
-                        else self.transitionDuration = animateDuration * 1.5;
-                    });
-                }}
-                revealChild={inputState().as((t) => {
-                    return !t;
-                })}
-                hexpand={true}
-                vexpand={true}
-            >
-                <Clock fontSize={128} fontWeight="normal" />
-            </revealer>
-        </box>
-    );
-    const entry = (
-        <entry
-            visibility={false}
-            css={`
-                border-radius: 20px;
-                background-color: rgba(0, 0, 0, 0.3);
-                border: 1px solid rgba(255, 255, 255, 0.5);
-                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-                padding-left: 12px;
-                padding-right: 30px;
-            `}
-        />
-    ) as Gtk.Entry;
+
+    let entry: Gtk.Entry = null as any;
     const inputPage = (
         <box
             className={"LockScreen"}
@@ -117,38 +56,56 @@ export default function LockScreen() {
             vexpand={true}
         >
             <box halign={Gtk.Align.CENTER} valign={Gtk.Align.CENTER} hexpand={true} vexpand={true}>
-                <box vertical={true} spacing={20}>
-                    <box
-                        vexpand={false}
-                        heightRequest={220}
-                        widthRequest={220}
-                        css={`
-                            background-image: url("${GLib.get_home_dir()}/.face");
-                            background-size: cover;
-                            background-repeat: no-repeat;
-                            background-position: center;
-                            border-radius: 100%;
-                            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                        `}
-                    />
+                <box vertical={true}>
+                    <box marginTop={12}>
+                        <box hexpand={true} />
+                        <box
+                            heightRequest={200}
+                            widthRequest={200}
+                            css={`
+                                background-image: url("/var/lib/AccountsService/icons/${GLib.get_user_name()}");
+                                background-size: cover;
+                                background-repeat: no-repeat;
+                                background-position: center;
+                                border-radius: 100%;
+                                box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                            `}
+                        />
+                        <box hexpand={true} />
+                    </box>
                     <label
                         label={GLib.get_user_name()}
-                        css={"font-size: 30px;text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);"}
+                        css={"font-size: 32px;text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);"}
                     />
-                    <box vertical={true}>
-                        <overlay>
-                            {entry}
+                    <box>
+                        <box hexpand={true} />
+                        <overlay marginTop={50}>
+                            <entry
+                                setup={(self) => (entry = self)}
+                                widthRequest={300}
+                                visibility={false}
+                                css={`
+                                    border-radius: 20px;
+                                    background-color: rgba(0, 0, 0, 0.3);
+                                    border: 1px solid rgba(255, 255, 255, 0.5);
+                                    box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+                                    padding-left: 12px;
+                                    padding-right: 30px;
+                                    color: white;
+                                `}
+                            />
                             <icon
-                                icon={"arrow-right"}
-                                heightRequest={24}
-                                widthRequest={24}
+                                icon={"builder-move-right-symbolic"}
+                                css={"font-size: 16px;"}
                                 halign={Gtk.Align.END}
-                                marginEnd={6}
+                                marginEnd={12}
+                                opacity={0.5}
                             />
                         </overlay>
-                        <label halign={Gtk.Align.CENTER} label={err()} />
+                        <box hexpand={true} />
                     </box>
-                    <box heightRequest={20} />
+                    <label halign={Gtk.Align.CENTER} label={err()} />
+                    <box heightRequest={200} />
                 </box>
             </box>
         </box>
@@ -174,11 +131,66 @@ export default function LockScreen() {
                     halign={Gtk.Align.FILL}
                     valign={Gtk.Align.FILL}
                 >
-                    {background}
+                    {wallpaper((w) => {
+                        if (w === "") return <box />;
+                        return (
+                            <Image
+                                setup={(self) => {
+                                    const { width, height } = monitor.get_geometry();
+                                    const pixbuf = loadImage(w, width, height);
+                                    self.pixbuf = pixbuf;
+                                }}
+                            />
+                        );
+                    })}
+
+                    <revealer
+                        transitionType={Gtk.RevealerTransitionType.CROSSFADE}
+                        transitionDuration={animateDuration}
+                        revealChild={isInput()}
+                    >
+                        {bluredWallpaper((w) => {
+                            if (w === "") return <box />;
+                            return (
+                                <Image
+                                    file={w}
+                                    visible={isInput()}
+                                    setup={(self) => {
+                                        const { width, height } = monitor.get_geometry();
+                                        const pixbuf = loadImage(w, width, height);
+                                        self.pixbuf = pixbuf;
+                                    }}
+                                />
+                            );
+                        })}
+                    </revealer>
+                    <revealer
+                        transitionType={Gtk.RevealerTransitionType.CROSSFADE}
+                        transitionDuration={100}
+                        revealChild={isInput()}
+                    >
+                        <box css={"background: rgba(0, 0, 0, 0.5);"} />
+                    </revealer>
+                    <revealer
+                        marginBottom={600}
+                        css={"text-shadow: 0 0 5px #000;"}
+                        transitionType={Gtk.RevealerTransitionType.CROSSFADE}
+                        setup={(self) => {
+                            self.hook(bind(isInput), (_, t) => {
+                                if (!t) self.transitionDuration = animateDuration / 2;
+                                else self.transitionDuration = animateDuration * 1.5;
+                            });
+                        }}
+                        revealChild={isInput().as((t) => !t)}
+                        hexpand={true}
+                        vexpand={true}
+                    >
+                        <Clock fontSize={128} fontWeight="normal" />
+                    </revealer>
                     <revealer
                         transitionDuration={animateDuration}
                         transitionType={Gtk.RevealerTransitionType.CROSSFADE}
-                        revealChild={inputState()}
+                        revealChild={isInput()}
                     >
                         {inputPage}
                     </revealer>
@@ -196,7 +208,7 @@ export default function LockScreen() {
             if (timer) timer.cancel();
 
             let t = animateDuration;
-            if (!inputState.get()) {
+            if (!isInput.get()) {
                 t = animateDuration * 1.5; // 时钟的关闭时间是1.5倍于背景的打开时间
             }
             timer = timeout(t, () => {
@@ -205,21 +217,21 @@ export default function LockScreen() {
             idle(() => {
                 entry.text = "";
                 err.set("");
-                if (inputState.get()) {
+                if (isInput.get()) {
                     entry.editable = true;
                     entry.grab_focus();
                 }
             });
         };
-        if (canReveal && e.get_keyval()[1] === Gdk.KEY_Escape && inputState.get()) {
+        if (canReveal && e.get_keyval()[1] === Gdk.KEY_Escape && isInput.get()) {
             doReveal();
-            inputState.set(false);
+            isInput.set(false);
         }
-        if (canReveal && e.get_keyval()[1] === Gdk.KEY_Return && !inputState.get()) {
+        if (canReveal && e.get_keyval()[1] === Gdk.KEY_Return && !isInput.get()) {
             doReveal();
-            inputState.set(true);
+            isInput.set(true);
         }
-        if (!revealing && e.get_keyval()[1] === Gdk.KEY_Return && inputState.get()) {
+        if (!revealing && e.get_keyval()[1] === Gdk.KEY_Return && isInput.get()) {
             err.set("");
             const password = entry.text;
             if (password.length === 0) return;

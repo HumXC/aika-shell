@@ -2,6 +2,7 @@ import { exec, execAsync, Gio, GLib } from "astal";
 import { EventBox } from "astal/gtk3/widget";
 import { Slurp as slurpConfig } from "./configs";
 import { Gdk, Gtk } from "astal/gtk3";
+import GdkPixbuf from "gi://GdkPixbuf?version=2.0";
 export function sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -314,4 +315,43 @@ export class AsyncMutex {
             next();
         }
     }
+}
+
+export function listDir(folder: string, allowedFile: Array<string>): Array<string> {
+    const files: Array<string> = [];
+    const cmd = ["find", folder];
+    cmd.push("-type", "f");
+    allowedFile.forEach((file) => cmd.push("-iname", "*" + file, "-o"));
+    cmd.pop();
+    files.push(...exec(cmd).split("\n"));
+    return files;
+}
+export function loadImage(file: string, target_width: number, target_height: number) {
+    let pixbuf = GdkPixbuf.Pixbuf.new_from_file(file);
+
+    let original_width = pixbuf.get_width();
+    let original_height = pixbuf.get_height();
+
+    let scale = Math.max(target_width / original_width, target_height / original_height);
+
+    let scaled_width = Math.round(original_width * scale);
+    let scaled_height = Math.round(original_height * scale);
+
+    let scaled_pixbuf = pixbuf.scale_simple(
+        scaled_width,
+        scaled_height,
+        GdkPixbuf.InterpType.BILINEAR
+    );
+
+    let offset_x = Math.floor((scaled_width - target_width) / 2);
+    let offset_y = Math.floor((scaled_height - target_height) / 2);
+
+    let cropped_pixbuf = scaled_pixbuf!.new_subpixbuf(
+        offset_x,
+        offset_y,
+        target_width,
+        target_height
+    );
+
+    return cropped_pixbuf;
 }

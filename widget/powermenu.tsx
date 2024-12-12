@@ -1,16 +1,16 @@
 import { Astal, Gdk, Gtk } from "astal/gtk3";
-import { EventIcon, Space } from "./base";
-import { bind, exec, execAsync, Variable } from "astal";
-import { GetConfig, ArrayConfig } from "../configs";
+import { EventIcon } from "./base";
+import { bind, execAsync, Variable } from "astal";
+import { GetConfig, SaveConfig } from "../configs";
 import { Clock } from "./top-bar";
 
-class PowermenuConfig extends ArrayConfig<{
+class PowermenuConfig extends Array<{
     label: string;
     iconName: string;
     action: string;
     default: boolean;
 }> {
-    default = [
+    static default = [
         {
             label: "Suspend",
             iconName: "system-suspend-symbolic",
@@ -45,6 +45,10 @@ class PowermenuConfig extends ArrayConfig<{
 }
 export default function Powermenu() {
     const cfg = GetConfig(PowermenuConfig, "powermenu");
+    if (cfg.length === 0) {
+        cfg.push(...PowermenuConfig.default);
+        SaveConfig();
+    }
     const select = Variable(-1);
     const icon = (index: number, iconName: string) => {
         return (
