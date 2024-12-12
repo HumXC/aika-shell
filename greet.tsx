@@ -1,5 +1,5 @@
 #!/usr/bin/gjs -m
-import { bind, exec, execAsync, Gio, GLib, idle, readFile, timeout, Variable } from "astal";
+import { bind, Binding, exec, execAsync, Gio, idle, readFile, timeout, Variable } from "astal";
 import { App, Astal, Gdk, Gtk, Widget } from "astal/gtk3";
 import Greet from "gi://AstalGreet";
 import { Image } from "./widget/base";
@@ -21,7 +21,7 @@ function getSessions(folders: string[]) {
 }
 async function login(user: string, passwd: string, session: string, env: string[]) {
     return new Promise<Error | null>((resolve) => {
-        const s = AllSessions.find((s) => s.get_name() === session)!;
+        const s = Sessions.find((s) => s.get_name() === session)!;
         Greet.login_with_env(user, passwd, s.get_executable(), env, (_, res) => {
             try {
                 Greet.login_with_env_finish(res);
@@ -49,7 +49,7 @@ function parseArgs(args: string[]): Option {
     ): [value: T, index: number] {
         if (args[i] === flag) {
             if (typeof defaultValue === "number") {
-                return [parseInt(args[i + 1]) as T, i + 1];
+                return [parseFloat(args[i + 1]) as T, i + 1];
             } else {
                 return [args[i + 1] as T, i + 1];
             }
@@ -87,20 +87,23 @@ function parseArgs(args: string[]): Option {
 // ags run greeter.tsx -a -test -a -s -a <USER> -a <CMD>
 // aika-greet -u <DEFAULT_USER> -e <NAME=value> -test -w <WALLPAPER_DIR> -m <MONITOR> -s <DEFAULT_SESSION>
 const User = Variable("");
-const Session_ = Variable("");
+const Session = Variable("");
 const Monitor = Variable(0);
-const Session = new Map<string, string>();
 const OPTION = parseArgs(ARGV);
 print(JSON.stringify(OPTION, null, 2));
-const AllSessions = getSessions(OPTION.sessionDirs);
-print(AllSessions.map((s) => "Session: " + s.get_name()).join("\n"));
+const Sessions = getSessions(OPTION.sessionDirs);
+print(Sessions.map((s) => "Session: " + s.get_name()).join("\n"));
 const Users = getUsers();
+print(Users.map((u) => "User: " + u).join("\n"));
+print(OPTION.env.map((e) => "Env: " + e).join("\n"));
 Users.forEach((u) => {
     if (u === OPTION.defaultUser) User.set(u);
 });
-print(Users.map((u) => "User: " + u).join("\n"));
-print(OPTION.env.map((e) => "Env: " + e).join("\n"));
-if (OPTION.defaultSession !== "") User.set(Users[0] ? Users[0] : "");
+if (User.get() === "") User.set(Users[0] ? Users[0] : "");
+Sessions.forEach((s) => {
+    if (s.get_name() === OPTION.defaultSession) Session.set(s.get_name());
+});
+if (Session.get() === "") Session.set(Sessions[0]?.get_name() ? Sessions[0]?.get_name() : "");
 if (OPTION.defaultMonitor !== 0) Monitor.set(OPTION.defaultMonitor);
 
 const Wallpapers = listDir(OPTION.wallpaperDir, [".jpg", ".jpeg", ".png"]);
@@ -149,6 +152,7 @@ function Greeter(monitor: number) {
     let err: Widget.Label = null as any;
     const isDone = Variable(true);
     const isAuth = Variable(false);
+
     return (
         <window
             onDestroy={() => execAsync(["rm", bluredWallpaperFile])}
@@ -185,7 +189,7 @@ function Greeter(monitor: number) {
                             }
                         } else {
                             isAuth.set(true);
-                            login(User.get(), entry.get_text(), Session_.get(), OPTION.env)
+                            login(User.get(), entry.get_text(), Session.get(), OPTION.env)
                                 .then((e) => {
                                     if (e) {
                                         console.error(e);
@@ -213,44 +217,13 @@ function Greeter(monitor: number) {
             }}
         >
             <overlay halign={Gtk.Align.FILL} valign={Gtk.Align.FILL}>
-                {wallpaper((w) => {
-                    if (w === "") return <box />;
-                    return (
-                        <Image
-                            setup={(self) => {
-                                const { width, height } = self
-                                    .get_display()
-                                    .get_monitor(monitor)!
-                                    .get_geometry();
-                                const pixbuf = loadImage(w, width, height);
-                                self.pixbuf = pixbuf;
-                            }}
-                        />
-                    );
-                })}
-
+                <Background monitor={monitor} background={wallpaper()} />
                 <revealer
                     transitionType={Gtk.RevealerTransitionType.CROSSFADE}
                     transitionDuration={dration}
                     revealChild={isInput()}
                 >
-                    {bluredWallpaper((w) => {
-                        if (w === "") return <box />;
-                        return (
-                            <Image
-                                file={w}
-                                visible={isInput()}
-                                setup={(self) => {
-                                    const { width, height } = self
-                                        .get_display()
-                                        .get_monitor(monitor)!
-                                        .get_geometry();
-                                    const pixbuf = loadImage(w, width, height);
-                                    self.pixbuf = pixbuf;
-                                }}
-                            />
-                        );
-                    })}
+                    <Background monitor={monitor} background={bluredWallpaper()} />
                 </revealer>
                 <revealer
                     transitionType={Gtk.RevealerTransitionType.CROSSFADE}
@@ -275,7 +248,7 @@ function Greeter(monitor: number) {
                 >
                     <label
                         label={time()}
-                        css={"font-size: 128px;text-shadow: 0 0 5px #000;"}
+                        css={"font-size: 128px; text-shadow: 0 0 5px #000;"}
                         marginTop={220}
                     />
                 </revealer>
@@ -311,7 +284,12 @@ function Greeter(monitor: number) {
                             />
                             <box hexpand={true} />
                         </box>
-                        <label label={User()} css={"font-size: 32px;"} />
+                        <label
+                            label={User()}
+                            css={`
+                                font-size: ${32}px;
+                            `}
+                        />
                         <box>
                             <box hexpand={true} />
                             <overlay marginTop={50}>
@@ -331,7 +309,9 @@ function Greeter(monitor: number) {
                                 />
                                 <icon
                                     icon={"builder-move-right-symbolic"}
-                                    css={"font-size: 16px;"}
+                                    css={`
+                                        font-size: 16px;
+                                    `}
                                     halign={Gtk.Align.END}
                                     marginEnd={12}
                                     opacity={0.5}
@@ -360,15 +340,34 @@ function Greeter(monitor: number) {
         </window>
     );
 }
-function Background({ monitor }: { monitor: number }) {
+function Background({
+    monitor,
+    background,
+    visible = true,
+}: {
+    monitor: number;
+    visible?: boolean | Binding<boolean | undefined>;
+    background: string | Binding<string | undefined>;
+}) {
     return (
         <Image
-            file={w}
-            visible={isInput()}
+            visible={visible}
             setup={(self) => {
-                const { width, height } = self.get_display().get_monitor(monitor)!.get_geometry();
-                const pixbuf = loadImage(w, width, height);
-                self.pixbuf = pixbuf;
+                const set = (file: string) => {
+                    if (file === "") return;
+                    print(`Set wallpaper ${file} for monitor ${monitor}`);
+                    const { width, height } = self
+                        .get_display()
+                        .get_monitor(monitor)!
+                        .get_geometry();
+                    const pixbuf = loadImage(file, width, height);
+                    self.pixbuf = pixbuf;
+                };
+                if (typeof background === "string") set(background);
+                else {
+                    self.hook(bind(background), (_, v) => set(v));
+                    set(background.get()!);
+                }
             }}
         />
     );
