@@ -42,14 +42,14 @@ let
     extraPackages = aika-greet-pkgs;
   };
 
-  aika-greet-hyprland = (args: import ./aika-greet-hyprland.nix
+  aika-greet-hyprland = (args: import ./aika-greet-hyprland.nix (
     {
       inherit pkgs aika-greet;
       # Example:
       # defaultUser = "Aika";
       # defaultSession = "Hyprland";
       # wallpaperDir = "/home/greeter/Pictures/wallpapers";
-      # defaultMonitor = 0;
+      # defaultMonitor = 2;
       # sessionDirs = [ "/var/share/wayland-sessions/" ];
       # env = {
       #   TEST = "test";
@@ -64,7 +64,8 @@ let
       #     };
       #     sensitivity = 0.04;
       # '';
-    } // args);
+    } // args
+  ));
 in
 rec {
   inherit
@@ -74,5 +75,5 @@ rec {
     aika-greet-hyprland;
   default = aika-shell;
   astal = agsPkgs.io;
-  aika-greet-hyprland-default = aika-greet-hyprland { };
+  aika-greet-hyprland-default = (aika-greet-hyprland { });
 }
