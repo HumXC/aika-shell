@@ -1,6 +1,6 @@
 import { exec, execAsync, Gio, GLib } from "astal";
 import { EventBox } from "astal/gtk3/widget";
-import { Slurp as slurpConfig } from "./configs";
+import { Slurp, Slurp as slurpConfig } from "./configs";
 import { Gdk, Gtk } from "astal/gtk3";
 import GdkPixbuf from "gi://GdkPixbuf?version=2.0";
 export function sleep(ms: number): Promise<void> {
@@ -100,6 +100,7 @@ export function slurp(
         aspectRatio: string;
     }>
 ): [string, Error | null] {
+    const slurpConfig = Slurp();
     const cmd = ["slurp"];
     const addCmd = (option: string, arg: string | undefined, cfg: string) => {
         if (arg) cmd.push(`-${option}`, `${arg}`);

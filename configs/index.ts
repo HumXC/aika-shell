@@ -3,11 +3,10 @@ import config from "./config";
 export const GetConfig = config.Get;
 export const SaveConfig = config.Save;
 export * from "./config";
-export const Slurp = config.Get(SlurpConfig, "slurp");
-export const WFRecorder = config.Get(WFRecorderConfig, "wf-recorder");
-export default {
-    GetConfig: config.Get,
-    SaveConfig: config.Save,
-    Slurp: Slurp,
-    WFRecorder: WFRecorder,
-};
+
+export function Slurp() {
+    return config.Get(SlurpConfig, "slurp");
+}
+export function WFRecorder() {
+    return config.Get(WFRecorderConfig, "wf-recorder");
+}

@@ -2,9 +2,9 @@ import { exec, Gio } from "astal";
 import { GObject, register, property, GLib, signal } from "astal/gobject";
 import { Gdk, Gtk } from "astal/gtk3";
 import { rectToString } from "../utils";
-import { WFRecorder as c } from "../configs";
+import { WFRecorder as WFRecorderConfig } from "../configs";
 import ScreenMask from "../widget/base/screen-region-mask";
-
+const c = WFRecorderConfig();
 @register()
 class WFRecorder extends GObject.Object {
     @property(Boolean) declare isRecording: boolean;
