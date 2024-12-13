@@ -1,21 +1,8 @@
 #!/usr/bin/gjs -m
-import {
-    bind,
-    Binding,
-    exec,
-    execAsync,
-    Gio,
-    GLib,
-    idle,
-    readFile,
-    timeout,
-    Variable,
-} from "astal";
+import { bind, Binding, exec, execAsync, Gio, idle, readFile, timeout, Variable } from "astal";
 import { App, Astal, Gdk, Gtk, Widget } from "astal/gtk3";
 import Greet from "gi://AstalGreet";
-import { Image } from "./widget/base";
-import { listDir, loadImage } from "./utils";
-import cairo from "gi://cairo?version=1.0";
+import { listDir } from "./utils";
 import GdkPixbuf from "gi://GdkPixbuf?version=2.0";
 function getUsers() {
     const users: string[] = [];
