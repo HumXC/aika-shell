@@ -41,12 +41,30 @@ let
     entry = "greet.tsx";
     extraPackages = aika-greet-pkgs;
   };
-  hyprConf = pkgs.writeText "greeter-hyprland-conf" ''
-    exec-once = ${aika-greet}/bin/aika-greet; ${pkgs.hyprland}/bin/hyprctl dispatch exit
-  '';
-  aika-greet-hyprland = pkgs.writeScript "aika-greet-hyprland" ''
-    ${pkgs.hyprland}/bin/Hyprland --config ${hyprConf}
-  '';
+
+  aika-greet-hyprland = (args: import ./aika-greet-hyprland.nix
+    {
+      inherit pkgs aika-greet;
+      # Example:
+      # defaultUser = "Aika";
+      # defaultSession = "Hyprland";
+      # wallpaperDir = "/home/greeter/Pictures/wallpapers";
+      # defaultMonitor = 0;
+      # sessionDirs = [ "/var/share/wayland-sessions/" ];
+      # env = {
+      #   TEST = "test";
+      #   A = "b";
+      # };
+      # hyprConf = ''
+      #   input = {
+      #     follow_mouse = 1;
+      #     float_switch_override_focus = 2;
+      #     touchpad = {
+      #       natural_scroll = "yes";
+      #     };
+      #     sensitivity = 0.04;
+      # '';
+    } // args);
 in
 rec {
   inherit
@@ -56,4 +74,5 @@ rec {
     aika-greet-hyprland;
   default = aika-shell;
   astal = agsPkgs.io;
+  aika-greet-hyprland-default = aika-greet-hyprland { };
 }

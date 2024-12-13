@@ -1,9 +1,22 @@
 #!/usr/bin/gjs -m
-import { bind, Binding, exec, execAsync, Gio, idle, readFile, timeout, Variable } from "astal";
+import {
+    bind,
+    Binding,
+    exec,
+    execAsync,
+    Gio,
+    GLib,
+    idle,
+    readFile,
+    timeout,
+    Variable,
+} from "astal";
 import { App, Astal, Gdk, Gtk, Widget } from "astal/gtk3";
 import Greet from "gi://AstalGreet";
 import { Image } from "./widget/base";
 import { listDir, loadImage } from "./utils";
+import cairo from "gi://cairo?version=1.0";
+import GdkPixbuf from "gi://GdkPixbuf?version=2.0";
 function getUsers() {
     const users: string[] = [];
     readFile("/etc/passwd")
@@ -110,7 +123,7 @@ const Wallpapers = listDir(OPTION.wallpaperDir, [".jpg", ".jpeg", ".png"]);
 print("Find wallpapers number: " + Wallpapers.length);
 
 App.start({
-    icons: `${SRC}/icons`,
+    icons: `${SRC}/assets/icons`,
     main() {
         App.get_monitors().map((_, index) => Greeter(index));
     },
@@ -148,14 +161,17 @@ function Greeter(monitor: number) {
             .catch((e) => {
                 console.error(e);
             });
-    let entry: Gtk.Entry = null as any;
-    let err: Widget.Label = null as any;
+    let entry: Widget.Entry = null as any;
+    const err = Variable("");
     const isDone = Variable(true);
     const isAuth = Variable(false);
 
     return (
         <window
-            onDestroy={() => execAsync(["rm", bluredWallpaperFile])}
+            onDestroy={() => {
+                execAsync(["rm", bluredWallpaperFile]);
+                App.quit();
+            }}
             monitor={monitor}
             keymode={Astal.Keymode.EXCLUSIVE}
             anchor={
@@ -172,18 +188,18 @@ function Greeter(monitor: number) {
                 if (isDone.get() || isAuth.get()) return;
                 if (e.get_keyval()[1] === Gdk.KEY_Escape) {
                     if (isInput.get()) isInput.set(false);
-                    else if (!isInput.get() && OPTION.test) App.quit();
+                    else if (!isInput.get() && OPTION.test) self.close();
                 }
                 if (e.get_keyval()[1] === Gdk.KEY_Return) {
                     if (!isInput.get()) isInput.set(true);
                     else {
-                        err.set_text("");
+                        err.set("");
                         if (OPTION.test) {
                             if (entry.get_text() === "test") {
                                 isDone.set(true);
-                                timeout(dration, () => App.quit());
+                                timeout(dration, () => self.close());
                             } else {
-                                err.set_text("Invalid password. 'test' is the correct password.");
+                                err.set("Invalid password. 'test' is the correct password.");
                                 entry.grab_focus();
                                 entry.select_region(0, -1);
                             }
@@ -193,12 +209,12 @@ function Greeter(monitor: number) {
                                 .then((e) => {
                                     if (e) {
                                         console.error(e);
-                                        err.set_text(e.message);
+                                        err.set(e.message);
                                         entry.grab_focus();
                                         entry.select_region(0, -1);
                                     } else {
                                         isDone.set(true);
-                                        timeout(dration, () => App.quit());
+                                        timeout(dration, () => self.close());
                                     }
                                 })
                                 .finally(() => isAuth.set(false));
@@ -216,23 +232,8 @@ function Greeter(monitor: number) {
                 idle(() => isDone.set(false));
             }}
         >
-            <overlay halign={Gtk.Align.FILL} valign={Gtk.Align.FILL}>
-                <Background monitor={monitor} background={wallpaper()} />
-                <revealer
-                    transitionType={Gtk.RevealerTransitionType.CROSSFADE}
-                    transitionDuration={dration}
-                    revealChild={isInput()}
-                >
-                    <Background monitor={monitor} background={bluredWallpaper()} />
-                </revealer>
-                <revealer
-                    transitionType={Gtk.RevealerTransitionType.CROSSFADE}
-                    transitionDuration={100}
-                    revealChild={isInput()}
-                >
-                    <box css={"background: rgba(0, 0, 0, 0.5);"} />
-                </revealer>
-
+            <overlay valign={Gtk.Align.FILL}>
+                <Background background={wallpaper()} />
                 <revealer
                     transitionType={Gtk.RevealerTransitionType.CROSSFADE}
                     transitionDuration={dration * 5}
@@ -252,87 +253,46 @@ function Greeter(monitor: number) {
                         marginTop={220}
                     />
                 </revealer>
-                <revealer
-                    transitionType={Gtk.RevealerTransitionType.CROSSFADE}
-                    transitionDuration={dration}
-                    revealChild={isInput()}
-                    halign={Gtk.Align.FILL}
+                <stack
+                    halign={Gtk.Align.START}
                     valign={Gtk.Align.FILL}
-                >
-                    <box
-                        hexpand={true}
-                        vexpand={true}
-                        vertical={true}
-                        halign={Gtk.Align.CENTER}
-                        valign={Gtk.Align.CENTER}
-                    >
-                        <box marginTop={12}>
-                            <box hexpand={true} />
-                            <box
-                                heightRequest={200}
-                                widthRequest={200}
-                                css={User(
-                                    (u) => `
-                                    background-image: url("/var/lib/AccountsService/icons/${u}");
-                                    background-size: cover;
-                                    background-repeat: no-repeat;
-                                    background-position: center;
-                                    border-radius: 100%;
-                                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                                    `
-                                )}
-                            />
-                            <box hexpand={true} />
-                        </box>
-                        <label
-                            label={User()}
-                            css={`
-                                font-size: ${32}px;
-                            `}
-                        />
-                        <box>
-                            <box hexpand={true} />
-                            <overlay marginTop={50}>
-                                <entry
-                                    setup={(self) => (entry = self)}
-                                    widthRequest={300}
-                                    visibility={false}
-                                    css={`
-                                        border-radius: 20px;
-                                        background-color: rgba(0, 0, 0, 0.3);
-                                        border: 1px solid rgba(255, 255, 255, 0.5);
-                                        box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
-                                        padding-left: 12px;
-                                        padding-right: 30px;
-                                        color: white;
-                                    `}
-                                />
-                                <icon
-                                    icon={"builder-move-right-symbolic"}
-                                    css={`
-                                        font-size: 16px;
-                                    `}
-                                    halign={Gtk.Align.END}
-                                    marginEnd={12}
-                                    opacity={0.5}
-                                />
-                            </overlay>
-                            <box hexpand={true} />
-                        </box>
-
-                        <label
-                            marginTop={20}
-                            setup={(self) => (err = self)}
-                            css={"font-size: 16px;"}
-                        />
-                        <box heightRequest={200} />
-                    </box>
-                </revealer>
-                <revealer
-                    receivesDefault={false}
-                    transitionType={Gtk.RevealerTransitionType.CROSSFADE}
+                    transitionType={Gtk.StackTransitionType.OVER_RIGHT_LEFT}
                     transitionDuration={dration}
-                    revealChild={isDone()}
+                    shown={isInput((i) => (i ? "inputPage" : "empty"))}
+                >
+                    <box name={"empty"} />
+                    <box name={"inputPage"}>
+                        {(() => {
+                            const [w, ent] = InputPage(err);
+                            entry = ent;
+                            return w;
+                        })()}
+                    </box>
+                </stack>
+                <revealer
+                    revealChild={true}
+                    receivesDefault={true}
+                    transitionType={Gtk.RevealerTransitionType.CROSSFADE}
+                    transitionDuration={0}
+                    visible={true}
+                    setup={(self) => {
+                        self.hook(bind(isDone), (_, v) => {
+                            if (v) {
+                                self.transitionDuration = 0;
+                                self.revealChild = false;
+                                self.visible = true;
+                                self.transitionDuration = dration;
+                                idle(() => (self.revealChild = true));
+                            } else {
+                                self.transitionDuration = 0;
+                                self.revealChild = true;
+                                self.visible = true;
+                                self.transitionDuration = dration * 2;
+                                idle(() => (self.revealChild = false));
+                                timeout(dration * 2, () => (self.visible = false));
+                            }
+                        });
+                    }}
                 >
                     <box css={"background: black;"} />
                 </revealer>
@@ -341,27 +301,25 @@ function Greeter(monitor: number) {
     );
 }
 function Background({
-    monitor,
     background,
     visible = true,
 }: {
-    monitor: number;
     visible?: boolean | Binding<boolean | undefined>;
     background: string | Binding<string | undefined>;
 }) {
     return (
-        <Image
+        <box
+            hexpand={true}
+            vexpand={true}
             visible={visible}
             setup={(self) => {
                 const set = (file: string) => {
                     if (file === "") return;
-                    print(`Set wallpaper ${file} for monitor ${monitor}`);
-                    const { width, height } = self
-                        .get_display()
-                        .get_monitor(monitor)!
-                        .get_geometry();
-                    const pixbuf = loadImage(file, width, height);
-                    self.pixbuf = pixbuf;
+                    self.css = `
+                        background-image: url("${file}");
+                        background-size: cover;
+                        background-repeat: no-repeat;
+                        background-position: center;`;
                 };
                 if (typeof background === "string") set(background);
                 else {
@@ -369,6 +327,265 @@ function Background({
                     set(background.get()!);
                 }
             }}
+            // @ts-ignore
+            onDraw={(self: Widget.Box, cr: any) => {
+                // cr.setSourceRGB(255, 0, 0);
+                // cr.rectangle(10, 10, 100, 100);
+                // cr.paint();
+            }}
         />
+    );
+}
+
+function ArrowButton({
+    direction,
+    onClick = (self: Widget.EventBox, e: Astal.ClickEvent) => {},
+    valign = Gtk.Align.CENTER,
+    halign = Gtk.Align.CENTER,
+}: {
+    direction: "left" | "right";
+    onClick?: (self: Widget.EventBox, e: Astal.ClickEvent) => void;
+    valign?: Gtk.Align | Binding<Gtk.Align | undefined> | undefined;
+    halign?: Gtk.Align | Binding<Gtk.Align | undefined> | undefined;
+}) {
+    let box: Widget.Icon = null as any;
+    const css = (color: string) => {
+        return `
+            background-color: ${color};
+            border-radius: 50%;
+            transition: background-color 0.2s ease-in-out;
+            font-size: 16px;
+        `;
+    };
+    return (
+        <box halign={halign} valign={valign} hexpand={true} vexpand={true}>
+            <eventbox
+                onHover={(self) => {
+                    box.css = css("rgba(255, 255, 255, 0.2)");
+                }}
+                onHoverLost={(self) => {
+                    box.css = css("rgba(255, 255, 255, 0.1)");
+                }}
+                onClick={(self, e) => onClick(self, e)}
+            >
+                <icon
+                    icon={direction === "left" ? "go-previous-symbolic" : "go-next-symbolic"}
+                    widthRequest={32}
+                    heightRequest={32}
+                    opacity={0.8}
+                    css={css("rgba(255, 255, 255, 0.1)")}
+                    setup={(self) => (box = self)}
+                />
+            </eventbox>
+        </box>
+    );
+}
+function InputPage(err: Variable<string>): [Gtk.Widget, Widget.Entry] {
+    let entry: Widget.Entry = null as any;
+    const w = (
+        <centerbox
+            hexpand={true}
+            vexpand={true}
+            vertical={true}
+            halign={Gtk.Align.FILL}
+            valign={Gtk.Align.FILL}
+            css={`
+                background: rgba(0, 0, 0, 1);
+                padding: 30px;
+            `}
+        >
+            <box vexpand={true} />
+            <box vertical={true} halign={Gtk.Align.CENTER} hexpand={true}>
+                <box marginTop={12} spacing={16}>
+                    <box hexpand={true} />
+                    <icon
+                        heightRequest={200}
+                        widthRequest={200}
+                        iconSize={16}
+                        setup={(self) => {
+                            const css = (user: string | null = null) => {
+                                return (
+                                    `
+                                    background-size: cover;
+                                    background-repeat: no-repeat;
+                                    background-position: center;
+                                    border-radius: 100%;
+                                    font-size: 200px;
+                                    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);` +
+                                    (user
+                                        ? `background-image: url("/var/lib/AccountsService/icons/${user}");`
+                                        : "")
+                                );
+                            };
+                            const set = (u: string) => {
+                                self.icon = "folder-image-people";
+                                if (
+                                    Gio.File.new_for_path(
+                                        `/var/lib/AccountsService/icons/${u}`
+                                    ).query_exists(null)
+                                ) {
+                                    self.css = css(u);
+                                    self.pixbuf = GdkPixbuf.Pixbuf.new(
+                                        GdkPixbuf.Colorspace.RGB,
+                                        true,
+                                        8,
+                                        1,
+                                        1
+                                    );
+                                    self.pixbuf.fill(0);
+                                } else {
+                                    self.css = css();
+                                    self.icon = "people";
+                                }
+                            };
+                            self.hook(bind(User), (_, u) => set(u));
+                            set(User.get());
+                        }}
+                    />
+                    <box hexpand={true} />
+                </box>
+
+                <box valign={Gtk.Align.CENTER} halign={Gtk.Align.CENTER}>
+                    <ArrowButton
+                        direction="left"
+                        halign={Gtk.Align.END}
+                        onClick={(self, e) => {
+                            const index = Users.indexOf(User.get()) - 1;
+                            if (index < 0) User.set(Users[Users.length - 1]);
+                            else User.set(Users[index]);
+                        }}
+                    />
+                    <label label={User()} css={"font-size: 32px;"} widthRequest={180} />
+                    <ArrowButton
+                        direction="right"
+                        halign={Gtk.Align.START}
+                        onClick={(self, e) => {
+                            const index = Users.indexOf(User.get()) + 1;
+                            if (index === Users.length) User.set(Users[0]);
+                            else User.set(Users[index]);
+                        }}
+                    />
+                </box>
+                <box>
+                    <box hexpand={true} />
+                    <overlay marginTop={50}>
+                        <entry
+                            setup={(self) => (entry = self)}
+                            widthRequest={300}
+                            visibility={false}
+                            css={`
+                                border-radius: 20px;
+                                background-color: rgba(0, 0, 0, 0.3);
+                                border: 1px solid rgba(255, 255, 255, 0.5);
+                                box-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+                                padding-left: 12px;
+                                padding-right: 30px;
+                                color: white;
+                            `}
+                        />
+                        <icon
+                            icon={"builder-move-right-symbolic"}
+                            css={`
+                                font-size: 16px;
+                            `}
+                            halign={Gtk.Align.END}
+                            marginEnd={12}
+                            opacity={0.5}
+                        />
+                    </overlay>
+                    <box hexpand={true} />
+                </box>
+            </box>
+            <box
+                valign={Gtk.Align.FILL}
+                halign={Gtk.Align.CENTER}
+                vexpand={true}
+                hexpand={true}
+                marginBottom={20}
+                vertical={true}
+            >
+                <label
+                    marginTop={20}
+                    label={err()}
+                    css={"font-size: 16px;"}
+                    wrap={true}
+                    maxWidthChars={30}
+                />
+                <box vexpand={true} />
+                <SessionSelector selected={Session} sessions={Sessions} />
+            </box>
+        </centerbox>
+    );
+    return [w, entry];
+}
+function SessionSelector({
+    sessions,
+    selected,
+}: {
+    sessions: Gio.DesktopAppInfo[];
+    selected: Variable<string>;
+}) {
+    const labelCss = (isShow: boolean) => {
+        return `
+            font-size: 16px;
+            color: ${isShow ? "rgba(255, 255, 255, 0.6)" : "rgba(255, 255, 255, 0.3)"};
+            transition: color 0.2s ease-in-out;
+        `;
+    };
+    return (
+        <box spacing={8} vertical={true} halign={Gtk.Align.CENTER}>
+            <box spacing={8} halign={Gtk.Align.CENTER}>
+                <eventbox
+                    valign={Gtk.Align.BASELINE}
+                    onHover={(self) => ((self.get_child() as Widget.Label).css = labelCss(true))}
+                    onHoverLost={(self) =>
+                        ((self.get_child() as Widget.Label).css = labelCss(false))
+                    }
+                    onClick={(self, e) => {
+                        let index =
+                            sessions.findIndex((session) => session.get_name() === selected.get()) -
+                            1;
+                        if (index === -1) index = sessions.length - 1;
+                        selected.set(sessions[index].get_name());
+                    }}
+                >
+                    <label css={labelCss(false)} valign={Gtk.Align.BASELINE} label={"<"} />
+                </eventbox>
+
+                <label
+                    label={selected()}
+                    opacity={0.8}
+                    css={"font-size: 20px;"}
+                    valign={Gtk.Align.BASELINE}
+                />
+                <eventbox
+                    valign={Gtk.Align.BASELINE}
+                    onHover={(self) => ((self.get_child() as Widget.Label).css = labelCss(true))}
+                    onHoverLost={(self) =>
+                        ((self.get_child() as Widget.Label).css = labelCss(false))
+                    }
+                    onClick={(self, e) => {
+                        let index =
+                            sessions.findIndex((session) => session.get_name() === selected.get()) +
+                            1;
+                        if (index === sessions.length) index = 0;
+                        selected.set(sessions[index].get_name());
+                    }}
+                >
+                    <label css={labelCss(false)} label={">"} valign={Gtk.Align.BASELINE} />
+                </eventbox>
+            </box>
+            <label
+                opacity={0.5}
+                css={"font-size: 14px;"}
+                wrap={true}
+                maxWidthChars={40}
+                label={selected(
+                    (s) =>
+                        sessions.find((session) => session.get_name() === s)?.get_description() ||
+                        ""
+                )}
+            />
+        </box>
     );
 }
