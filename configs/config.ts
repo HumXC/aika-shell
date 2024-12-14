@@ -8,7 +8,10 @@ function Load() {
         return {};
     }
 }
-let Data = Load();
+let Data: any;
+try {
+    Data = Load();
+} catch (error) {}
 function Save() {
     writeFileAsync(file, JSON.stringify(Data, null, 4)).catch((e) => console.error(e));
 }

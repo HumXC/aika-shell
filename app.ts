@@ -20,7 +20,7 @@ services();
 App.start({
     requestHandler: (request, res) => Handle(request, res),
     css: style,
-    icons: `${SRC}/icons`,
+    icons: `${SRC}/assets/icons`,
     main() {
         App.get_monitors().map(TopBar);
     },
