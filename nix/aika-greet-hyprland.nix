@@ -22,7 +22,7 @@ let
     )
   ;
   hyprConfFinal = pkgs.writeText "aika-greet-hyprland-conf" ''
-    exec-once = ${aika-greet}/bin/aika-greet ${argv} > /home/greeter/aika-greet.log 2>&1; ${pkgs.hyprland}/bin/hyprctl dispatch exit
+    exec-once = ${aika-greet}/bin/aika-greet ${argv} >> /home/greeter/aika-greet.log 2>&1; ${pkgs.hyprland}/bin/hyprctl dispatch exit
     ${hyprConf}
   '';
 in
