@@ -1,7 +1,8 @@
 import { exec } from "astal";
-import { formatBytes, formatDuration, notifySend, slurpRect, wlCopy } from "../utils";
+import { formatBytes, formatDuration, notifySend, wlCopy } from "../utils";
 
 import WFRecorder from "../lib/wf-recorder";
+import { slurpRect } from "../tools";
 
 function StartRecording() {
     const wf = WFRecorder.get_default();

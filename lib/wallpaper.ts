@@ -147,7 +147,6 @@ const allowedImage = [
     return acc;
 }, []);
 
-const config = GetConfig(Config, "wallpaper");
 function listDirs(folders: Array<Folder>): Array<string> {
     const files: Array<string> = [];
     for (const folder of folders) {
@@ -165,6 +164,7 @@ function pickerRandom(
     wallpaper: Wallpaper,
     onTrigger?: (self: Trigger) => void | false
 ) {
+    const config = GetConfig(Config, "wallpaper");
     let transitionIndex = -1;
     return () => {
         if (onTrigger && onTrigger(self) === false) return;
@@ -182,6 +182,7 @@ function pickerForward(
     wallpaper: Wallpaper,
     onTrigger?: (self: Trigger) => void | false
 ) {
+    const config = GetConfig(Config, "wallpaper");
     let index = -1;
     let transitionIndex = -1;
     return () => {
@@ -203,6 +204,7 @@ function pickerBackward(
     wallpaper: Wallpaper,
     onTrigger?: (self: Trigger) => void | false
 ) {
+    const config = GetConfig(Config, "wallpaper");
     let index = -1;
     let transitionIndex = -1;
     return () => {
@@ -227,6 +229,7 @@ class Trigger {
     constructor(wallpaper: Wallpaper, rule: Rule, onTrigger?: (self: Trigger) => void | false) {
         if (!rule.folder || rule.folder?.length === 0)
             throw new Error("Wallpaper rule is invalid, no folders specified");
+        const config = GetConfig(Config, "wallpaper");
         this.rule = rule;
         this.transitions = config.transitions.filter((t) => rule.transitions?.includes(t.name!));
         this.wallpaper = wallpaper;
@@ -340,6 +343,7 @@ class Trigger {
 @register()
 class Wallpaper extends GObject.Object {
     setWallpaper(file: string, monitors?: Array<string>, transition?: Transition) {
+        const config = GetConfig(Config, "wallpaper");
         let t = transition || config.transitions.find((t) => t.name === "default");
         let m = monitors?.join(",");
         const cmd = ["swww", "img"];
@@ -354,15 +358,18 @@ class Wallpaper extends GObject.Object {
             .map((line) => new SwwwQuery(line));
     }
     get folders(): Array<Folder> {
+        const config = GetConfig(Config, "wallpaper");
         return config.folders;
     }
     triggers: Array<Trigger> = [];
     get rules(): Array<Rule> {
+        const config = GetConfig(Config, "wallpaper");
         return config.rules;
     }
     defaultRule: Rule;
     constructor() {
         super();
+        const config = GetConfig(Config, "wallpaper");
         let defaultRule = config.rules.find((rule) => rule.name === "default");
         if (defaultRule === undefined) {
             if (config.folders.length === 0)

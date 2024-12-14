@@ -8,7 +8,7 @@ function Load() {
         return {};
     }
 }
-const Data: any = Load();
+let Data = Load();
 function Save() {
     writeFileAsync(file, JSON.stringify(Data, null, 4)).catch((e) => console.error(e));
 }
@@ -24,7 +24,6 @@ function GetAny(key: string): any {
     class AnyClass {}
     return Get(AnyClass, key);
 }
-
 export default {
     Data,
     Save,

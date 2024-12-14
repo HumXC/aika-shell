@@ -1,5 +1,5 @@
 import { exec } from "astal";
-import { slurp } from "../utils";
+import { slurp } from "../tools";
 
 export default function Handler(request: string) {
     const req = request.split(" ").filter((s) => s.length > 0);

@@ -4,7 +4,6 @@ import { Gdk, Gtk } from "astal/gtk3";
 import { rectToString } from "../utils";
 import { WFRecorder as WFRecorderConfig } from "../configs";
 import ScreenMask from "../widget/base/screen-region-mask";
-const c = WFRecorderConfig();
 @register()
 class WFRecorder extends GObject.Object {
     @property(Boolean) declare isRecording: boolean;
@@ -31,6 +30,7 @@ class WFRecorder extends GObject.Object {
         super();
         this.useMask = true;
         this.connect("notify::use-mask", () => {
+            const c = WFRecorderConfig();
             if (this.useMask && this._region) {
                 this.mask = ScreenMask(this._region, c.borderWeight, c.borderStyle, c.borderColor);
             } else {
@@ -40,6 +40,7 @@ class WFRecorder extends GObject.Object {
         });
     }
     start(region: Gdk.Rectangle | null, onError?: (error: Error) => void): void {
+        const c = WFRecorderConfig();
         this._region = region;
         this._file = `${c.forder}/${c.filePrefix}-${exec("date -u +%Y-%m-%dT%H-%M-%S")}.${
             c.format
