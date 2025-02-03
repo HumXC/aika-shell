@@ -1,27 +1,10 @@
-#!/usr/bin/gjs -m
-import { App } from "astal/gtk3";
-import style from "./style.scss";
-import TopBar from "./widget/top-bar";
-import { Handle, Register } from "./request-handler";
-import Screenshot from "./handler/screenshot";
-import Recorder from "./handler/wf-recorder";
-import Clipboard from "./handler/clipboard";
-import Powermenu from "./handler/powermenu";
-import ScreenLock from "./handler/lockscreen";
-import AppLauncher from "./handler/app-launcher";
-Register("screenshot", Screenshot);
-Register("recorder", Recorder);
-Register("clipboard", Clipboard);
-Register("powermenu", Powermenu);
-Register("lockscreen", ScreenLock);
-Register("app-launcher", AppLauncher);
-import services from "./services";
-services();
+import { App } from "astal/gtk4"
+import style from "./style.scss"
+import Bar from "./widget/Bar"
+
 App.start({
-    requestHandler: (request, res) => Handle(request, res),
     css: style,
-    icons: `${SRC}/assets/icons`,
     main() {
-        App.get_monitors().map(TopBar);
+        App.get_monitors().map(Bar)
     },
-});
+})

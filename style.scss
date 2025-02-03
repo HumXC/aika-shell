@@ -1,162 +1,20 @@
-@use "public-colors";
-@use "animations";
-$radius: "100px";
-$window_bg_color: rgba(0, 0, 0, 0.6);
-$base_bg_color: rgba(176, 176, 176, 0.1);
-$base_fg_color: rgb(226, 226, 226);
-$item_selected_bg_color: rgba(31, 136, 255, 0.15);
-$item_hover_bg_color: rgba(255, 255, 255, 0.16);
-$selected_color: rgb(255, 255, 255);
-$selected_bg_color: rgba(135, 135, 135, 0.345);
-$bar_bg_color: linear-gradient(
-        135deg,
-        rgba(0, 0, 0, 0.8),
-        rgba(8, 19, 22, 0.722),
-        rgba(3, 13, 20, 0.8),
-        rgba(10, 6, 18, 0.821),
-        rgba(12, 18, 12, 0.703)
-    )
-    center / cover;
-$bar_base_bg_color: rgba(104, 104, 104, 0.345);
-
-$tray_item_hover_color: rgba(255, 255, 255, 0.269);
-label {
-    color: #{public-colors.$theme_fg_color};
-}
+// https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gtk/theme/Adwaita/_colors-public.scss
+$fg-color: #{"@theme_fg_color"};
+$bg-color: #{"@theme_bg_color"};
 
 window.Bar {
     background: transparent;
-    color: transparent;
-    .Clock {
-        color: $base_fg_color;
-    }
-    > box {
-        background: $bar_bg_color;
-        border-radius: #{$radius};
-        padding: 0 4px;
-        > centerbox {
-            padding: 6px 0;
-        }
-    }
-}
-box.Tray {
-    background: $bar_base_bg_color;
-    .TrayItem {
-        background: transparent;
-    }
-    .TrayItem-hover {
-        background: $tray_item_hover_color;
-    }
-}
-box.NetSpeed {
-    border-radius: #{$radius};
-    > label {
-        color: $base_fg_color;
-    }
-    background: $bar_base_bg_color;
-}
-box.NetSpeed-hover {
-    border-radius: #{$radius};
-    background: $bar_base_bg_color;
-}
-eventbox.StatusIndicators {
-    background: $bar_base_bg_color;
-    color: $base_fg_color;
-    border-radius: #{$radius};
-}
-eventbox.StatusIndicators-hover {
-    background: $bar_base_bg_color;
-    color: $base_fg_color;
-    border-radius: #{$radius};
-    .Icon-hover {
-        color: $selected_color;
-    }
-}
-box.Workspace {
-    background: $bar_base_bg_color;
-    border-radius: #{$radius};
-    .Item {
-        background: rgba(255, 255, 255, 0.157);
-        border-radius: 50px;
-    }
-    .Item-focused {
-        background: $base_fg_color;
-    }
-}
-box.RecorderIcon {
-    background: $bar_base_bg_color;
-    border-radius: #{$radius};
-}
+    color: $fg-color;
+    font-weight: bold;
 
-window.Powermenu {
-    label {
-        color: $base_fg_color;
+    >centerbox {
+        background: $bg-color;
+        border-radius: 10px;
+        margin: 8px;
     }
-    background: rgb(0, 0, 0);
-    .PowermenuIcon {
-        border-radius: 50%;
-        background: rgb(19, 19, 19);
-        color: rgb(128, 128, 128);
-    }
-    .PowermenuIcon-hover {
-        border-radius: 50%;
-        background: rgb(54, 54, 54);
-        color: rgb(205, 205, 205);
-    }
-}
-box.PopupWindow {
-    background: $window_bg_color;
-    .PopupWindowItem {
-        // background: rgba(176, 176, 176, 0.1);
-        background: $base_bg_color;
-    }
-    .PopupWindowItem-selected {
-        background: $item_selected_bg_color;
-    }
-    .PopupWindowItem-hover {
-        background: $item_hover_bg_color;
-    }
-}
-box.NotificationPopup {
-    .PopupWindowItem {
-        background: transparent;
-    }
-    .PopupWindowItem-hover {
-        background: $base_bg_color;
-    }
-    .NotificationContent {
-        padding: 12px;
-    }
-}
-box.NotificationTooltip {
-    .NotificationIconClearButton {
-        color: rgba(174, 174, 174, 0.68);
-    }
-    .NotificationIconClearButton-hover {
-        color: rgba(255, 44, 44, 0.68);
-    }
-}
-box.Clipboard {
-    background: $window_bg_color;
-    > entry {
-        background: $item_hover_bg_color;
+
+    button {
         border-radius: 8px;
-    }
-    > scrolledwindow > viewport > list {
-        background: transparent;
-        > row {
-            background: $item_hover_bg_color;
-            border-radius: 8px;
-        }
-    }
-}
-
-box.AppLauncher {
-    background: $window_bg_color;
-    .AppLauncherIcon {
-        background: $base_bg_color;
-    }
-    .AppLauncherIcon-hover {
-        background: $item_hover_bg_color;
+        margin: 2px;
     }
 }
