@@ -1,6 +1,6 @@
 @use "public-colors" as *;
+// TODO: 适配Gtk主题颜色
 // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gtk/theme/Adwaita/_colors-public.scss
-// $theme_bg_color: #{"@theme_bg_color"};
 window.Bar {
     background: transparent;
     font-weight: bold;

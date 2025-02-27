@@ -1,14 +1,22 @@
-import { App, Astal, Gtk, Gdk, hook, Widget } from "astal/gtk4";
-import Gsk from "gi://Gsk";
-import { bind, GLib, idle, timeout, Variable } from "astal";
+import { App, Astal, Gtk, Gdk, Widget } from "astal/gtk4";
+import { GLib, idle, Variable } from "astal";
 import Notifd from "gi://AstalNotifd";
 import Pango from "gi://Pango?version=1.0";
 import GdkPixbuf from "gi://GdkPixbuf";
-import { Label } from "astal/gtk4/widget";
 import Cairo from "gi://cairo";
-import Graphene from "gi://Graphene?version=1.0";
-class RoundImage extends Gtk.Image {}
-export function Window(gdkmonitor: Gdk.Monitor) {
+class Notification {
+    window: Gtk.Window;
+    push: (n: Notifd.Notification) => void;
+    constructor(gdkmonitor: Gdk.Monitor) {
+        const { window, push } = Window(gdkmonitor);
+        this.window = window;
+        this.push = push;
+    }
+}
+export default Notification;
+function Window(gdkmonitor: Gdk.Monitor) {
+    // TODO: 增加动画
+    // TODO: 增加超出长度的滚动
     const { TOP, RIGHT } = Astal.WindowAnchor;
     const box: Astal.Box = <box vertical spacing={8} heightRequest={1} widthRequest={1} />;
     const window = (
@@ -28,9 +36,9 @@ export function Window(gdkmonitor: Gdk.Monitor) {
         </window>
     );
     function push(n: Notifd.Notification) {
-        box.children = [Popup(n), ...box.children];
+        box.children = [...box.children, Popup(n)];
     }
-    return { window, push };
+    return { window: window as Gtk.Window, push };
 }
 function Popup(n: Notifd.Notification) {
     const isHovered = Variable(false);
@@ -38,10 +46,20 @@ function Popup(n: Notifd.Notification) {
     var box: Astal.Box = null as any;
 
     function destroy() {
+        print("destroy", n.id);
         const parent = box.parent as Astal.Box;
         parent.remove(box);
         if (parent.children.length <= 0) (parent.parent as Gtk.Window).close();
     }
+    let timer: number = 0;
+    const newTimer = () => {
+        if (timer) GLib.source_remove(timer);
+        timer = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, () => {
+            destroy();
+            return false;
+        });
+    };
+    newTimer();
     function Top() {
         return (
             <box
@@ -68,10 +86,14 @@ function Popup(n: Notifd.Notification) {
                         self.children = [drawArea, ...self.children];
                     } else {
                         const image = Widget.Image({
-                            iconName: n.appIcon === "" ? "applications-system-symbolic" : n.appIcon,
                             iconSize: Gtk.IconSize.LARGE,
                             pixelSize: 48,
                         });
+                        if (n.actionIcons) {
+                            image.set_from_icon_name(n.appIcon);
+                        } else {
+                            image.set_from_file(n.appIcon);
+                        }
                         self.children = [image, ...self.children];
                     }
                 }}
@@ -181,8 +203,15 @@ function Popup(n: Notifd.Notification) {
             setup={(self) => {
                 box = self;
                 const motionCtl = Gtk.EventControllerMotion.new();
-                motionCtl.connect("enter", () => isHovered.set(true));
-                motionCtl.connect("leave", () => isHovered.set(false));
+                motionCtl.connect("enter", () => {
+                    isHovered.set(true);
+                    if (timer) GLib.source_remove(timer);
+                    timer = 0;
+                });
+                motionCtl.connect("leave", () => {
+                    isHovered.set(false);
+                    newTimer();
+                });
 
                 const clickCtl = Gtk.EventControllerLegacy.new();
                 clickCtl.connect("event", (_, event: Gdk.Event) => {
@@ -194,7 +223,6 @@ function Popup(n: Notifd.Notification) {
                         // 此处 idle 防止与删除通知的点击事件冲突
                         idle(() => {
                             if (isInTrash) return;
-                            print("delete");
                             if (e.get_button() === Gdk.BUTTON_PRIMARY) {
                                 const defaultAction = n.actions.find((a) => a.id === "default");
                                 if (defaultAction) n.invoke(defaultAction.id);
@@ -223,7 +251,7 @@ function Popup(n: Notifd.Notification) {
         </box>
     );
 }
-export function createRoundedMask(
+function createRoundedMask(
     cr: any,
     x: number,
     y: number,
