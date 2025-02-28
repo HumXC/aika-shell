@@ -22,6 +22,7 @@ class Bar {
         const time = <label label={services.time.HM()} />;
         this.areaCenter.append(time);
         this.areaLeft.append(component.Tray());
+        this.areaRight.append(component.StateBar());
     }
 }
 export default Bar;

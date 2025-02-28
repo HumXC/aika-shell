@@ -4,8 +4,8 @@ import { Gdk, Gtk } from "astal/gtk4";
 function addHoverController(
     widget: Gtk.Widget,
     delay: number,
-    hover: (self: Gtk.Widget) => void,
-    leave: (self: Gtk.Widget) => void
+    hover: (self: Gtk.Widget) => void = () => {},
+    leave: (self: Gtk.Widget) => void = () => {}
 ) {
     const ctl = Gtk.EventControllerMotion.new();
     let isHovering = false;
@@ -49,4 +49,9 @@ function addClickController(
     );
 }
 
-export { addHoverController, addClickController };
+function addScrollController(widget: Gtk.Widget, callback: (self: Gtk.Widget, dy: number) => void) {
+    const ctl = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.VERTICAL);
+    ctl.connect("scroll", (e, dx, dy) => callback(widget, dy));
+    widget.add_controller(ctl);
+}
+export { addHoverController, addClickController, addScrollController };

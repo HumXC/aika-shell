@@ -1,6 +1,10 @@
 @use "public-colors" as *;
 // TODO: 适配Gtk主题颜色
 // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gtk/theme/Adwaita/_colors-public.scss
+
+window {
+    margin: 8px;
+}
 window.Bar {
     background: transparent;
     font-weight: bold;
@@ -8,7 +12,7 @@ window.Bar {
     > centerbox {
         background: $window_bg_color;
         border-radius: 10px;
-        margin: 8px;
+        margin-bottom: 8px;
     }
 
     button {
