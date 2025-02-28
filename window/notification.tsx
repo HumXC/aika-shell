@@ -4,6 +4,7 @@ import Notifd from "gi://AstalNotifd";
 import Pango from "gi://Pango?version=1.0";
 import GdkPixbuf from "gi://GdkPixbuf";
 import Cairo from "gi://cairo";
+import { addClickController, addHoverController } from "../utils";
 class Notification {
     window: Gtk.Window;
     push: (n: Notifd.Notification) => void;
@@ -202,37 +203,30 @@ function Popup(n: Notifd.Notification) {
             valign={Gtk.Align.FILL}
             setup={(self) => {
                 box = self;
-                const motionCtl = Gtk.EventControllerMotion.new();
-                motionCtl.connect("enter", () => {
-                    isHovered.set(true);
-                    if (timer) GLib.source_remove(timer);
-                    timer = 0;
-                });
-                motionCtl.connect("leave", () => {
-                    isHovered.set(false);
-                    newTimer();
-                });
-
-                const clickCtl = Gtk.EventControllerLegacy.new();
-                clickCtl.connect("event", (_, event: Gdk.Event) => {
-                    if (
-                        isHovered.get() &&
-                        event.get_event_type() === Gdk.EventType.BUTTON_RELEASE
-                    ) {
-                        const e = event as Gdk.ButtonEvent;
-                        // 此处 idle 防止与删除通知的点击事件冲突
-                        idle(() => {
-                            if (isInTrash) return;
-                            if (e.get_button() === Gdk.BUTTON_PRIMARY) {
-                                const defaultAction = n.actions.find((a) => a.id === "default");
-                                if (defaultAction) n.invoke(defaultAction.id);
-                            }
-                            destroy();
-                        });
+                addHoverController(
+                    self,
+                    0,
+                    () => {
+                        isHovered.set(true);
+                        if (timer) GLib.source_remove(timer);
+                        timer = 0;
+                    },
+                    () => {
+                        isHovered.set(false);
+                        newTimer();
                     }
+                );
+                addClickController(self, "onRelease", (_, gdkButton) => {
+                    // 此处 idle 防止与删除通知的点击事件冲突
+                    idle(() => {
+                        if (isInTrash) return;
+                        if (gdkButton === Gdk.BUTTON_PRIMARY) {
+                            const defaultAction = n.actions.find((a) => a.id === "default");
+                            if (defaultAction) n.invoke(defaultAction.id);
+                        }
+                        destroy();
+                    });
                 });
-                self.add_controller(motionCtl);
-                self.add_controller(clickCtl);
                 self.show();
             }}
         >

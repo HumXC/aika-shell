@@ -1,0 +1,52 @@
+import { timeout } from "astal";
+import { Gdk, Gtk } from "astal/gtk4";
+
+function addHoverController(
+    widget: Gtk.Widget,
+    delay: number,
+    hover: (self: Gtk.Widget) => void,
+    leave: (self: Gtk.Widget) => void
+) {
+    const ctl = Gtk.EventControllerMotion.new();
+    let isHovering = false;
+    ctl.connect("enter", () => {
+        timeout(delay, () => {
+            if (!isHovering) {
+                isHovering = true;
+                hover(widget);
+            }
+        });
+    });
+    ctl.connect("leave", () => {
+        isHovering = false;
+        leave(widget);
+    });
+    widget.add_controller(ctl);
+}
+
+function addClickController(
+    widget: Gtk.Widget,
+    mode: "onRelease" | "onPress",
+    callback: (self: Gtk.Widget, gdkButton: number, x: number, y: number) => void
+) {
+    const clickCtl = Gtk.EventControllerLegacy.new();
+    let clickType = Gdk.EventType.BUTTON_PRESS;
+    let isEntering = false;
+    if (mode === "onRelease") clickType = Gdk.EventType.BUTTON_RELEASE;
+    clickCtl.connect("event", (_, event: Gdk.Event) => {
+        if (event.get_event_type() === clickType && isEntering) {
+            const e = event as Gdk.ButtonEvent;
+            const p = e.get_position();
+            callback(widget, e.get_button(), p[1], p[2]);
+        }
+    });
+    widget.add_controller(clickCtl);
+    addHoverController(
+        widget,
+        0,
+        () => (isEntering = true),
+        () => (isEntering = false)
+    );
+}
+
+export { addHoverController, addClickController };
