@@ -1,5 +1,5 @@
 import { bind, Variable } from "astal";
-import NetworkSpeed from "../../lib/network-speed";
+import NetworkSpeed from "../../../lib/network-speed";
 import { Space } from "../base";
 import { Astal, Gdk, Gtk } from "astal/gtk3";
 import { GetConfig, SaveConfig } from "../../configs";

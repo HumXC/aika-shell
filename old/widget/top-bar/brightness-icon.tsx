@@ -1,5 +1,5 @@
 import { bind, Variable } from "astal";
-import DDCBrightness, { Monitor } from "../../lib/ddc-brightness";
+import DDCBrightness, { Monitor } from "../../../lib/ddc-brightness";
 import { EventIcon } from "../base";
 import { setHoverClassName } from "../../utils";
 import BrightnessTooltip from "./brightness-tooltip";

@@ -1,4 +1,4 @@
-import { GetConfig } from "../configs";
+import { GetConfig } from "../old/configs";
 import { exec, execAsync, interval, timeout } from "astal";
 import { GObject, register, GLib } from "astal/gobject";
 

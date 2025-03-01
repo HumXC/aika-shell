@@ -1,5 +1,5 @@
-import { timeout } from "astal";
-import { Gdk, Gtk } from "astal/gtk4";
+import { AstalIO, timeout } from "astal";
+import { Astal, Gdk, Gtk } from "astal/gtk4";
 
 function addHoverController(
     widget: Gtk.Widget,
@@ -9,8 +9,9 @@ function addHoverController(
 ) {
     const ctl = Gtk.EventControllerMotion.new();
     let isHovering = false;
+    let timer: AstalIO.Time | null = null;
     ctl.connect("enter", () => {
-        timeout(delay, () => {
+        timer = timeout(delay, () => {
             if (!isHovering) {
                 isHovering = true;
                 hover(widget);
@@ -18,6 +19,7 @@ function addHoverController(
         });
     });
     ctl.connect("leave", () => {
+        if (timer) timer.cancel();
         isHovering = false;
         leave(widget);
     });

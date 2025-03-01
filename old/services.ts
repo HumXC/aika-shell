@@ -1,4 +1,4 @@
-import Wallpaper from "./lib/wallpaper";
+import Wallpaper from "../lib/wallpaper";
 
 import Notifd from "gi://AstalNotifd?version=0.1";
 import NotifactionPopup from "./widget/notification-popup";

@@ -2,7 +2,7 @@ import { Astal, Gdk, Gtk } from "astal/gtk3";
 import PopupWindow from "../base/popup-window";
 import { bind } from "astal";
 import { EventIcon } from "../base";
-import ddcBrightness, { Monitor } from "../../lib/ddc-brightness";
+import ddcBrightness, { Monitor } from "../../../lib/ddc-brightness";
 import { getHyprlandRounding } from "../../utils";
 
 function Slider({ monitor: p, rounding }: { monitor: Monitor; rounding: number }) {

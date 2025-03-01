@@ -1,7 +1,7 @@
 import { exec } from "astal";
 import { GObject, register, property, GLib, signal } from "astal/gobject";
 import { Gtk } from "astal/gtk3";
-import { formatBytes } from "../utils";
+import { formatBytes } from "../old/utils";
 
 @register()
 class NetworkSpeed extends GObject.Object {

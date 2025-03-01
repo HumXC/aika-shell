@@ -1,5 +1,5 @@
 import { bind, GLib, Variable } from "astal";
-import wfRecorder from "../../lib/wf-recorder";
+import wfRecorder from "../../../lib/wf-recorder";
 import { formatDuration } from "../../utils";
 import Pango from "gi://Pango?version=1.0";
 
