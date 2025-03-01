@@ -19,8 +19,8 @@ class Bar {
         this.areaCenterLeft = areaCenterLeft;
         this.areaCenterRight = areaCenterRight;
 
-        const time = <label label={services.time.HM()} />;
-        this.areaCenter.append(time);
+        const clock = <label cssName="clock" label={services.time.HM()} />;
+        this.areaCenter.append(clock);
         this.areaLeft.append(component.Tray());
         this.areaRight.append(component.StateBar());
     }
@@ -37,13 +37,19 @@ function Window(gdkmonitor: Gdk.Monitor) {
     const window = (
         <window
             visible
-            cssClasses={["Bar"]}
+            cssName="bar"
             gdkmonitor={gdkmonitor}
             exclusivity={Astal.Exclusivity.EXCLUSIVE}
             anchor={TOP | LEFT | RIGHT}
             application={App}
         >
-            <centerbox cssName="centerbox">
+            <centerbox
+                cssName="contents"
+                marginTop={8}
+                marginEnd={8}
+                marginStart={8}
+                // marginBottom={8}
+            >
                 <overlay
                     setup={(overlay) => {
                         overlay.add_overlay(

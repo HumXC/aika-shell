@@ -1,34 +1,14 @@
 @use "public-colors" as *;
 // TODO: 适配Gtk主题颜色
 // https://gitlab.gnome.org/GNOME/gtk/-/blob/gtk-3-24/gtk/theme/Adwaita/_colors-public.scss
-
-window {
-    margin: 8px;
-}
-window.Bar {
+bar {
     background: transparent;
-    font-weight: bold;
-
-    > centerbox {
-        background: $window_bg_color;
+    contents {
+        background-color: $window_bg_color;
         border-radius: 10px;
-        margin-bottom: 8px;
+        padding: 8px;
     }
-
-    button {
-        border-radius: 8px;
-        margin: 2px;
-    }
-}
-notification {
-    .window {
-        background: transparent;
-    }
-
-    .popup {
-        background-color: $card_bg_color;
-        border: 2px solid $borders_color;
-        button {
-        }
+    clock {
+        font-weight: bold;
     }
 }

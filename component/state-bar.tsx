@@ -2,11 +2,9 @@ import { AstalIO, bind, Gio, idle, timeout, Variable } from "astal";
 import { Gdk, Gtk } from "astal/gtk4";
 import AstalWp from "gi://AstalWp";
 import AstalNetwork from "gi://AstalNetwork";
-import Astal from "gi://AstalBluetooth";
 import { addClickController, addHoverController, addScrollController } from "../utils";
-import { Popover, PopoverProps } from "astal/gtk4/widget";
-import PopupWindow, { PopupWindowProps } from "./popup-window";
 import ddcBrightness, { Monitor } from "../lib/ddc-brightness";
+const IconSize = 25;
 function Sound(popupName: Variable<string>) {
     const name = "sound";
     let popover: Gtk.Popover = null as any;
@@ -52,7 +50,7 @@ function Sound(popupName: Variable<string>) {
                 popover.set_pointing_to(rect);
             }}
         >
-            <image iconName={bind(wp.defaultSpeaker, "volumeIcon")} />
+            <image iconName={bind(wp.defaultSpeaker, "volumeIcon")} pixelSize={IconSize} />
             {/* BUG: image 会穿透鼠标 */}
             <popover
                 autohide={false}
