@@ -1,7 +1,8 @@
 blueprints = custom_target(
     'compile-blueprints',
     input: files(
-        'bar.blp', 
+        'widget/clock.blp',
+        'window/bar.blp',
     ),
     output: '.',
     command: [

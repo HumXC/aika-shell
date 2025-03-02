@@ -1,6 +1,6 @@
 using Gtk 4.0;
 
-template $AikaShellBar: Window {
+template $WindowBar: Window {
     visible: true;
     css-name: "bar";
     title: "Aika Shell";
@@ -15,29 +15,17 @@ template $AikaShellBar: Window {
 
             Box areaStart {
                 halign: start;
-
-                Label {
-                    label: "[Area Start]";
-                }
             }
 
             [overlay]
             Box areaCenterStart {
                 halign: end;
-
-                Label {
-                    label: "[Area Center End]";
-                }
             }
         }
 
         [center]
         Box areaCenter {
             halign: center;
-
-            Label {
-                label: "[Area Center]";
-            }
         }
 
         [end]
@@ -46,19 +34,11 @@ template $AikaShellBar: Window {
 
             Box areaCenterEnd {
                 halign: start;
-
-                Label {
-                    label: "[Area Center End]";
-                }
             }
 
             [overlay]
             Box areaEnd {
                 halign: end;
-
-                Label {
-                    label: "[Area End]";
-                }
             }
         }
     }
