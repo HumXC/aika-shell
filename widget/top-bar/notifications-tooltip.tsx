@@ -152,12 +152,14 @@ export default function NotificationTooltip({
                                     let icon: string = n.appIcon;
                                     if (icon === "") {
                                         icon = "applications-system-symbolic";
-                                        const desktop = apps.find(
-                                            (d) =>
-                                                d.get_entry() ===
-                                                n.desktopEntry.toLowerCase() + ".desktop"
-                                        );
-                                        if (desktop) icon = desktop.iconName;
+                                        if (n.desktopEntry) {
+                                            const desktop = apps.find(
+                                                (d) =>
+                                                    d.get_entry() ===
+                                                    n.desktopEntry.toLowerCase() + ".desktop"
+                                            );
+                                            if (desktop) icon = desktop.iconName;
+                                        }
                                     }
                                     filtered.set(n.appName, {
                                         appName: n.appName,
