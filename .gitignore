@@ -1,5 +1,7 @@
-@girs/
-node_modules/
-.direnv
+.vscode
 .envrc
-config.json
+.direnv
+build
+builddir
+result
+data/scss/main.scss.map

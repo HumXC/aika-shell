@@ -1,0 +1,65 @@
+using Gtk 4.0;
+
+template $AikaShellBar: Window {
+    visible: true;
+    css-name: "bar";
+    title: "Aika Shell";
+    decorated: false;
+
+    CenterBox {
+        css-name: "contents";
+
+        [start]
+        Overlay {
+            hexpand: true;
+
+            Box areaStart {
+                halign: start;
+
+                Label {
+                    label: "[Area Start]";
+                }
+            }
+
+            [overlay]
+            Box areaCenterStart {
+                halign: end;
+
+                Label {
+                    label: "[Area Center End]";
+                }
+            }
+        }
+
+        [center]
+        Box areaCenter {
+            halign: center;
+
+            Label {
+                label: "[Area Center]";
+            }
+        }
+
+        [end]
+        Overlay {
+            hexpand: true;
+
+            Box areaCenterEnd {
+                halign: start;
+
+                Label {
+                    label: "[Area Center End]";
+                }
+            }
+
+            [overlay]
+            Box areaEnd {
+                halign: end;
+
+                Label {
+                    label: "[Area End]";
+                }
+            }
+        }
+    }
+}

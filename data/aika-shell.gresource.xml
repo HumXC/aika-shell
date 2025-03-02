@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/github/humxc/aika-shell">
+    <file>style.css</file>
+    <file preprocess="xml-stripblanks">ui/bar.ui</file>
+
+    <file compressed="true">icons/scalable/apps/nix-snowflake-colours.svg</file>
+  </gresource>
+</gresources>
