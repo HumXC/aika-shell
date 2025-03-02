@@ -7,7 +7,7 @@ scss_deps = files(
 
 scss = custom_target(
     'generate-css',
-    input: scss_deps,
+    input: 'main.scss',
     output: 'style.css',
     command: [
         sass,
