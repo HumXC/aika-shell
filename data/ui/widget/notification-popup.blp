@@ -39,12 +39,10 @@ template $WidgetNotificationPopup: Box {
   css-name: "notification-popup";
   orientation: vertical;
   width-request: 320;
-  valign: fill;
+  map => $on_map();
 
   Box {
-    Image image {
-      map => $on_image_map();
-    }
+    Image image {}
 
     Box {
       orientation: vertical;
@@ -55,12 +53,23 @@ template $WidgetNotificationPopup: Box {
           label: bind template.summary;
           hexpand: true;
           halign: start;
+          ellipsize: end;
+          max-width-chars: 1;
+          wrap: true;
         }
 
-        Label {
-          css-name: "app-name";
+        Box {
           visible: bind template.isHovered inverted;
-          label: bind template.appName;
+
+          Label {
+            css-name: "app-name";
+            label: bind template.appName;
+            halign: end;
+          }
+
+          Image {
+            icon-name: bind template.iconName;
+          }
         }
       }
 
@@ -68,23 +77,31 @@ template $WidgetNotificationPopup: Box {
         hexpand: true;
         css-name: "body";
         visible: bind template.isHovered inverted;
-        label: bind template.body;
+        label: bind template.body1;
         halign: start;
         ellipsize: end;
         max-width-chars: 1;
         wrap: true;
       }
 
-      Label {
-        css-name: "app-name";
+      Box {
         visible: bind template.isHovered;
-        label: bind template.appName;
-        halign: start;
+
+        Label {
+          css-name: "app-name";
+          label: bind template.appName;
+          halign: start;
+        }
+
+        Image {
+          icon-name: bind template.iconName;
+        }
       }
     }
 
     Button {
       visible: bind template.isHovered;
+      clicked => $on_dispose_button_click();
 
       Image {
         icon-name: "object-select-symbolic";
@@ -97,10 +114,10 @@ template $WidgetNotificationPopup: Box {
 
     Label {
       css-name: "body";
-      label: bind template.body;
+      label: bind template.body2;
       halign: start;
       wrap: true;
-      wrap-mode: word_char;
+      wrap-mode: char;
       max-width-chars: 1;
     }
   }
