@@ -55,10 +55,9 @@ public class Widget.NotificationPopup : Gtk.Box {
 
     public void addTimeout (uint timeout) {
         timer = Timeout.add_once (timeout, () => {
-            unparent ();
             timer = 0;
+            unparent ();
         });
-        print (timer.to_string ());
     }
 
     public void cancelTimeout () {
