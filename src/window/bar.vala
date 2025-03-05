@@ -7,7 +7,7 @@ public enum Window.BarPosition {
     LEFT,
 }
 [GtkTemplate (ui = "/com/github/humxc/aika-shell/ui/window/bar.ui")]
-public class Window.Bar : Gtk.Window {
+public class Window.Bar : Astal.Window {
     [GtkChild]
     private unowned Gtk.Box areaCenter;
     [GtkChild]
@@ -19,25 +19,17 @@ public class Window.Bar : Gtk.Window {
     [GtkChild]
     private unowned Gtk.Box areaCenterEnd;
     public Bar () {
-        GtkLayerShell.init_for_window (this);
-        GtkLayerShell.set_layer (this, GtkLayerShell.Layer.TOP);
-        GtkLayerShell.set_keyboard_mode (this, GtkLayerShell.KeyboardMode.NONE);
-        GtkLayerShell.set_namespace (this, "aika-shell-bar");
-        GtkLayerShell.auto_exclusive_zone_enable (this);
         this.SetPosition (BarPosition.TOP);
         areaCenter.append (new Widget.Clock ());
     }
 
     private void SetPosition (BarPosition position) {
-        GtkLayerShell.Edge[] anchors = {
-            GtkLayerShell.Edge.BOTTOM,
-            GtkLayerShell.Edge.LEFT,
-            GtkLayerShell.Edge.TOP,
-            GtkLayerShell.Edge.RIGHT,
+        Astal.WindowAnchor[] anchors = {
+            Astal.WindowAnchor.TOP | Astal.WindowAnchor.LEFT | Astal.WindowAnchor.RIGHT,
+            Astal.WindowAnchor.RIGHT | Astal.WindowAnchor.TOP | Astal.WindowAnchor.BOTTOM,
+            Astal.WindowAnchor.BOTTOM | Astal.WindowAnchor.LEFT | Astal.WindowAnchor.RIGHT,
+            Astal.WindowAnchor.TOP | Astal.WindowAnchor.LEFT | Astal.WindowAnchor.BOTTOM,
         };
-        for (var i = 0; i < anchors.length; i++) {
-            if (position == i)continue;
-            GtkLayerShell.set_anchor (this, anchors[i], true);
-        }
+        anchor = anchors[position];
     }
 }

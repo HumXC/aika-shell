@@ -1,10 +1,14 @@
 using Gtk 4.0;
+using Astal 4.0;
 
-template $WindowBar: Window {
+template $WindowBar: Astal.Window {
     visible: true;
     css-name: "bar";
     title: "Aika Shell";
-    decorated: false;
+    namespace: "aika-shell-bar";
+    exclusivity: exclusive;
+    modal: false;
+    keymode: none;
 
     CenterBox {
         css-name: "contents";

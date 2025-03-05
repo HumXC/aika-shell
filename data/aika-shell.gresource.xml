@@ -3,7 +3,9 @@
   <gresource prefix="/com/github/humxc/aika-shell">
     <file>style.css</file>
     <file preprocess="xml-stripblanks">ui/window/bar.ui</file>
+    <file preprocess="xml-stripblanks">ui/window/notification-container.ui</file>
     <file preprocess="xml-stripblanks">ui/widget/clock.ui</file>
+    <file preprocess="xml-stripblanks">ui/widget/notification-popup.ui</file>
 
     <file compressed="true">icons/scalable/apps/nix-snowflake-colours.svg</file>
   </gresource>

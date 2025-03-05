@@ -1,0 +1,111 @@
+using Gtk 4.0;
+// +-------------------------------------------+
+// | +--------+  +--------------------------+  |
+// | |        |  | summary...          AppName|  |
+// | | Image  |  |--------------------------|  |
+// | |        |  | Body...                  |  |
+// | +--------+  +--------------------------+  |
+// |                                           |
+// |  +----------------+  +----------------+   |
+// |  | Action default |  | Other action...|   |
+// |  +----------------+  +----------------+   |
+// |                                           |
+// +-------------------------------------------+
+// 
+//  Hover:
+// +-------------------------------------------+
+// | +--------+  +--------------------------+  |
+// | |        |  | summary...                 |  |
+// | | Image  |  |--------------------------|  |
+// | |        |  | AppName                  |  |
+// | +--------+  +--------------------------+  |
+// |                                           |
+// | +--------------------------------------+  |
+// | | Body...                               |  |
+// | |                                      |  |
+// | |                                      |  |
+// | |                                      |  |
+// | |                                      |  |
+// | |                                      |  |
+// | +--------------------------------------+  |
+// |                                           |
+// |  +----------------+  +----------------+   |
+// |  | Action default |  | Other action...|   |
+// |  +----------------+  +----------------+   |
+// |                                           |
+// +-------------------------------------------+
+template $WidgetNotificationPopup: Box {
+  // 这一行并不起作用，在vala代码中设置css-name属性
+  css-name: "notification-popup";
+  orientation: vertical;
+  width-request: 320;
+  valign: fill;
+
+  Box {
+    Image image {
+      map => $on_image_map();
+    }
+
+    Box {
+      orientation: vertical;
+
+      Box {
+        Label {
+          css-name: "summary";
+          label: bind template.summary;
+          hexpand: true;
+          halign: start;
+        }
+
+        Label {
+          css-name: "app-name";
+          visible: bind template.isHovered inverted;
+          label: bind template.appName;
+        }
+      }
+
+      Label {
+        hexpand: true;
+        css-name: "body";
+        visible: bind template.isHovered inverted;
+        label: bind template.body;
+        halign: start;
+        ellipsize: end;
+        max-width-chars: 1;
+        wrap: true;
+      }
+
+      Label {
+        css-name: "app-name";
+        visible: bind template.isHovered;
+        label: bind template.appName;
+        halign: start;
+      }
+    }
+
+    Button {
+      visible: bind template.isHovered;
+
+      Image {
+        icon-name: "object-select-symbolic";
+      }
+    }
+  }
+
+  Box {
+    visible: bind template.isHovered;
+
+    Label {
+      css-name: "body";
+      label: bind template.body;
+      halign: start;
+      wrap: true;
+      wrap-mode: word_char;
+      max-width-chars: 1;
+    }
+  }
+
+  Box actionBox {
+    css-name: "action-box";
+  }
+}

@@ -1,3 +1,13 @@
 clock {
     font-weight: bold;
 }
+notification-popup {
+    border: 2px solid black;
+    background-color: rgb(112, 0, 0);
+}
+notification-popup:hover {
+    border: 2px solid rgb(30, 161, 63);
+}
+notification-container {
+    background: transparent;
+}

@@ -1,0 +1,19 @@
+using Gtk 4.0;
+using Astal 4.0;
+
+template $WindowNotificationContainer: Astal.Window {
+    exclusivity: exclusive;
+    keymode: none;
+    layer: top;
+    namespace: "aika-shell-notification-container";
+    // 这一行并不起作用，在vala代码中设置css-name属性
+    css-name: "notification-container";
+
+    Gtk.Box box {
+        css-name: "notification-container";
+        spacing: 20;
+        orientation: vertical;
+        width-request: 1;
+        height-request: 1;
+    }
+}

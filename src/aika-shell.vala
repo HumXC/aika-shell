@@ -13,6 +13,9 @@ public class AikaShell.App : Gtk.Application {
                                                    Gtk.STYLE_PROVIDER_PRIORITY_USER);
         var bar = new Window.Bar ();
         bar.present ();
+
+
+        Services.Notifd.get_default ();
         this.hold ();
     }
 }
