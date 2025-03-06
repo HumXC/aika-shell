@@ -37,4 +37,14 @@ namespace Utils {
         });
         widget.add_controller(ctl);
     }
+
+    public delegate bool addScrollControllerCallback(double dy);
+
+    public void addScrollController(Gtk.Widget widget, addScrollControllerCallback scroll) {
+        var ctl = new Gtk.EventControllerScroll(Gtk.EventControllerScrollFlags.VERTICAL);
+        ctl.scroll.connect((dx, dy) => {
+            return scroll(dy);
+        });
+        widget.add_controller(ctl);
+    }
 }

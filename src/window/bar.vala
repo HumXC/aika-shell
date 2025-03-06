@@ -22,6 +22,7 @@ public class Window.Bar : Astal.Window {
         this.SetPosition (BarPosition.TOP);
         areaCenter.append (new Widget.Clock ());
         areaStart.append (new Widget.Tray ());
+        areaEnd.append (new Widget.StateBar ());
     }
 
     private void SetPosition (BarPosition position) {

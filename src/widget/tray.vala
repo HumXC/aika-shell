@@ -26,8 +26,7 @@ public class Widget.TrayIcon : Gtk.Box {
     private Gtk.Image icon = new Gtk.Image();
     private Gtk.PopoverMenu menu;
     public AstalTray.TrayItem item;
-    public TrayIcon(AstalTray.TrayItem item, int iconSize = 22) {
-        icon.pixel_size = iconSize;
+    public TrayIcon(AstalTray.TrayItem item) {
         this.item = item;
         append(icon);
         update(item);

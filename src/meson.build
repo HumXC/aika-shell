@@ -1,10 +1,10 @@
 src = [
-    'aika-shell.vala',
     'utils.vala',
     'services/time.vala',
     'services/notifd.vala',
     'window/bar.vala',
     'widget/tray.vala',
+    'widget/state-bar.vala',
     'window/notification-container.vala',
     'widget/clock.vala',
     'widget/notification-popup.vala',
@@ -37,8 +37,8 @@ deps = [
     meson.get_compiler('vala').find_library('posix'),
 ]
 executable(
-    'aika-shell',
-    sources,
+    'aika-bar',
+    sources + ['cmd/bar.vala'],
     dependencies: deps,
     link_args: ['-lm'],
     install: true,
