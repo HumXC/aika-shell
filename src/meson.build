@@ -4,6 +4,7 @@ src = [
     'services/time.vala',
     'services/notifd.vala',
     'window/bar.vala',
+    'widget/tray.vala',
     'window/notification-container.vala',
     'widget/clock.vala',
     'widget/notification-popup.vala',
