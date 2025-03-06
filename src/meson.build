@@ -1,6 +1,7 @@
 src = [
     'utils.vala',
     'services/time.vala',
+    'lib/ddcutil.vala',
     'services/notifd.vala',
     'window/bar.vala',
     'widget/tray.vala',
