@@ -3,6 +3,11 @@ public class Widget.StateBar : Gtk.Box {
         Object (css_name: "state-bar");
         append (new StateBarWpIcon ());
         append (new StateBarNetworkIcon ());
+        DDCUtil.get_default ().ready.connect (() => {
+            DDCUtil.get_default ().brightness.foreach ((s) => {
+                print ("Brightness: %d", s);
+            });
+        });
     }
 }
 
